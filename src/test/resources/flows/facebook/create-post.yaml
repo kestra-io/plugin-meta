@@ -1,0 +1,10 @@
+id: facebook_create_post_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: create_simple_post
+    type: io.kestra.plugin.meta.facebook.CreatePost
+    pageId: "123456789"
+    accessToken: "test_access_token"
+    message: "Hello from Kestra test!"
+    apiBaseUrl: "{{ inputs.url }}"

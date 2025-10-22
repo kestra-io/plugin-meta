@@ -1,0 +1,12 @@
+id: facebook_schedule_post_with_link_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: schedule_post_with_link
+    type: io.kestra.plugin.meta.facebook.SchedulePost
+    pageId: "123456789"
+    accessToken: "test_access_token"
+    message: "Scheduled post with link"
+    link: "https://example.com"
+    scheduledPublishTime: "1735689600"
+    apiBaseUrl: "{{ inputs.url }}"

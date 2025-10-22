@@ -1,0 +1,10 @@
+id: facebook_list_posts_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: list_posts
+    type: io.kestra.plugin.meta.facebook.ListPosts
+    pageId: "123456789"
+    accessToken: "test_access_token"
+    limit: 10
+    apiBaseUrl: "{{ inputs.url }}"

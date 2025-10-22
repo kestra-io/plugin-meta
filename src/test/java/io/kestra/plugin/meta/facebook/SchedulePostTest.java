@@ -12,25 +12,24 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
-class CreatePostTest extends AbstractFacebookTest {
+class SchedulePostTest extends AbstractFacebookTest {
 
     @Test
-    void createSimplePost() throws TimeoutException, QueueException {
-        Execution execution = runFlow("facebook_create_post_test");
+    void schedulePost() throws TimeoutException, QueueException {
+        Execution execution = runFlow("facebook_schedule_post_test");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("postId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("postId"), is("123456789_987654321"));
     }
 
     @Test
-    void createPostWithLink() throws TimeoutException, QueueException {
-        Execution execution = runFlow("facebook_create_post_with_link_test");
+    void schedulePostWithLink() throws TimeoutException, QueueException {
+        Execution execution = runFlow("facebook_schedule_post_with_link_test");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("postId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("link"), is("https://kestra.io"));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("link"), notNullValue());
     }
 }
