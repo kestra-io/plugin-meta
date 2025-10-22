@@ -12,11 +12,11 @@ import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import lombok.Builder;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -29,47 +29,51 @@ import java.util.Map;
 @Getter
 @EqualsAndHashCode
 @Schema(
-    title = "Create a post on a Facebook Page",
-    description = "Publish content to a Facebook Page including text, links, and media"
+    title = "Schedule a post on a Facebook Page",
+    description = "Schedule content to be published at a future time on a Facebook Page"
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Create a simple text post",
+            title = "Schedule a post for tomorrow",
             full = true,
             code = """
-                id: facebook_create_post
+                id: facebook_schedule_post
                 namespace: company.team
 
                 tasks:
-                  - id: create_post
-                    type: io.kestra.plugin.meta.facebook.CreatePost
+                  - id: schedule_post
+                    type: io.kestra.plugin.meta.facebook.SchedulePost
                     pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                    message: "Hello from Kestra! This is an automated post."
+                    message: "This post is scheduled for tomorrow!"
+                    scheduledPublishTime: "{{ now() | dateAdd(1, 'DAYS') | date('yyyy-MM-dd HH:mm:ss') }}"
                 """
         ),
         @Example(
-            title = "Create a post with link",
-            full = true,
+            title = "Schedule a post with Unix timestamp",
             code = """
-                - id: create_post_with_link
-                  type: io.kestra.plugin.meta.facebook.CreatePost
+                - id: schedule_unix_post
+                  type: io.kestra.plugin.meta.facebook.SchedulePost
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  message: "Check out this amazing automation platform!"
-                  link: "https://kestra.io"
+                  message: "Scheduled post with timestamp"
+                  scheduledPublishTime: "1735689600"
+                  link: "https://example.com"
                 """
         )
     }
 )
-public class CreatePost extends AbstractFacebookTask {
+public class SchedulePost extends AbstractFacebookTask {
 
     @Schema(title = "Post Message", description = "The text content of the post")
     protected Property<String> message;
 
     @Schema(title = "Link URL", description = "Optional link to include in the post")
     protected Property<String> link;
+
+    @Schema(title = "Scheduled Publish Time", description = "When to publish the post. Accepts Unix timestamp, ISO 8601 string, or any format parsable by PHP's strtotime(). Must be between 10 minutes and 30 days from now.")
+    protected Property<String> scheduledPublishTime;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -87,7 +91,9 @@ public class CreatePost extends AbstractFacebookTask {
             runContext.render(this.link).as(String.class).ifPresent(linkUrl -> postData.put("link", linkUrl));
         }
 
-        postData.put("published", Boolean.TRUE);
+        String scheduleTime = runContext.render(this.scheduledPublishTime).as(String.class).orElseThrow();
+        postData.put("published", false);
+        postData.put("scheduled_publish_time", scheduleTime);
 
         String jsonBody = JacksonMapper.ofJson().writeValueAsString(postData);
         String fullUrl = url + (url.contains("?") ? "&" : "?") + "access_token="
@@ -112,18 +118,21 @@ public class CreatePost extends AbstractFacebookTask {
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
-                        "Failed to create post: " + response.getStatus().getCode() + " - " + response.getBody());
+                        "Failed to schedule post: " + response.getStatus().getCode() + " - " + response.getBody());
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
             String postId = responseJson.get("id").asText();
 
-            runContext.logger().info("Successfully created Facebook post with ID: {}", postId);
+            runContext.logger().info("Successfully scheduled Facebook post with ID: {} for time: {}", postId,
+                    scheduleTime);
 
             return Output.builder()
                     .postId(postId)
                     .message(postData.get("message") != null ? postData.get("message").toString() : null)
                     .link(postData.get("link") != null ? postData.get("link").toString() : null)
+                    .scheduledPublishTime(scheduleTime)
+                    .published(false)
                     .build();
         }
     }
@@ -131,7 +140,7 @@ public class CreatePost extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the created post")
+        @Schema(title = "The ID of the scheduled post")
         @JsonProperty("postId")
         private final String postId;
 
@@ -143,5 +152,12 @@ public class CreatePost extends AbstractFacebookTask {
         @JsonProperty("link")
         private final String link;
 
+        @Schema(title = "The scheduled publish time")
+        @JsonProperty("scheduledPublishTime")
+        private final String scheduledPublishTime;
+
+        @Schema(title = "Published status (false for scheduled posts)")
+        @JsonProperty("published")
+        private final Boolean published;
     }
 }

@@ -1,5 +1,6 @@
 package io.kestra.plugin.meta.facebook;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -14,10 +15,10 @@ import lombok.experimental.SuperBuilder;
 import lombok.Builder;
 
 @SuperBuilder
-@ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@ToString(exclude = {"accessToken"})
 public abstract class AbstractFacebookTask extends Task implements RunnableTask<io.kestra.core.models.tasks.Output> {
 
     @Schema(title = "Facebook Page ID", description = "The ID of the Facebook page to perform operations on")
@@ -26,7 +27,6 @@ public abstract class AbstractFacebookTask extends Task implements RunnableTask<
 
     @Schema(title = "Access Token", description = "Facebook Page access token with appropriate permissions (pages_manage_posts, pages_manage_engagement, etc.)")
     @NotNull
-    @ToString.Exclude
     protected Property<String> accessToken;
 
     @Schema(title = "API Version", description = "Facebook Graph API version to use")
