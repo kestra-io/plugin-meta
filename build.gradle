@@ -49,6 +49,11 @@ dependencies {
     annotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
     compileOnly group: "io.kestra", name: "core", version: kestraVersion
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
+
+    // http client
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation("io.micronaut:micronaut-http-client-jdk")
+    implementation("org.awaitility:awaitility:4.3.0")
 }
 
 
@@ -96,6 +101,10 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
     testImplementation "org.hamcrest:hamcrest"
     testImplementation "org.hamcrest:hamcrest-library"
+
+    // mock web server
+    testImplementation "io.micronaut:micronaut-http-server-netty"
+    testImplementation "org.mockito:mockito-core"
 }
 
 /**********************************************************************************************************************\

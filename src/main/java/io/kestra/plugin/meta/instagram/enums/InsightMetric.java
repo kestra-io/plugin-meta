@@ -1,0 +1,26 @@
+package io.kestra.plugin.meta.instagram.enums;
+
+public enum InsightMetric {
+    LIKES,
+    COMMENTS,
+    SAVES,
+    SHARES,
+    REACH,
+    IMPRESSIONS,
+    PROFILE_VISITS,
+    PROFILE_ACTIVITY,
+    WEBSITE_CLICKS,
+    EMAIL_CONTACTS,
+    PHONE_CALL_CLICKS,
+    TEXT_MESSAGE_CLICKS,
+    GET_DIRECTIONS_CLICKS,
+    FOLLOWS,
+    UNFOLLOWS,
+    VIEWS,
+    TOTAL_INTERACTIONS,
+    REPLIES,
+    TAPS_FORWARD,
+    TAPS_BACK,
+    EXITS,
+    NAVIGATION
+}

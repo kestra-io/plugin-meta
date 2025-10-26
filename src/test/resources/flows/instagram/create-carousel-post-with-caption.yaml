@@ -1,0 +1,13 @@
+id: instagram_create_carousel_post_with_caption_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: create_carousel_post_with_caption
+    type: io.kestra.plugin.meta.instagram.CreateCarouselPost
+    igId: "17841467149546531"
+    accessToken: "test_access_token"
+    mediaUrls:
+      - "https://example.com/image1.jpg"
+      - "https://example.com/image2.jpg"
+    caption: "Test carousel post from Kestra!"
+    host: "{{ inputs.url }}"

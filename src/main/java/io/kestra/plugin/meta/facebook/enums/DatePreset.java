@@ -7,7 +7,6 @@ public enum DatePreset {
     LAST_MONTH,
     THIS_QUARTER,
     MAXIMUM,
-    DATA_MAXIMUM,
     LAST_3D,
     LAST_7D,
     LAST_14D,

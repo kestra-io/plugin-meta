@@ -42,6 +42,7 @@ class ListPostsTest extends AbstractFacebookTest {
         List<Map<String, Object>> posts = (List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
                 .get("posts");
         assertThat(posts, notNullValue());
+        assertThat(posts, not(empty()));
         assertThat(posts.getFirst().containsKey("id"), is(true));
         assertThat(posts.getFirst().containsKey("message"), is(true));
     }

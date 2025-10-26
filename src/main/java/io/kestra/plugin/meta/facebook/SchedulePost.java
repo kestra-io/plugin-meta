@@ -19,8 +19,6 @@ import lombok.experimental.SuperBuilder;
 import lombok.Builder;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,16 +26,9 @@ import java.util.Map;
 @NoArgsConstructor
 @Getter
 @EqualsAndHashCode
-@Schema(
-    title = "Schedule a post on a Facebook Page",
-    description = "Schedule content to be published at a future time on a Facebook Page"
-)
-@Plugin(
-    examples = {
-        @Example(
-            title = "Schedule a post for tomorrow",
-            full = true,
-            code = """
+@Schema(title = "Schedule a post on a Facebook Page", description = "Schedule content to be published at a future time on a Facebook Page")
+@Plugin(examples = {
+        @Example(title = "Schedule a post for tomorrow", full = true, code = """
                 id: facebook_schedule_post
                 namespace: company.team
 
@@ -48,11 +39,8 @@ import java.util.Map;
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     message: "This post is scheduled for tomorrow!"
                     scheduledPublishTime: "{{ now() | dateAdd(1, 'DAYS') | date('yyyy-MM-dd HH:mm:ss') }}"
-                """
-        ),
-        @Example(
-            title = "Schedule a post with Unix timestamp",
-            code = """
+                """),
+        @Example(title = "Schedule a post with Unix timestamp", code = """
                 - id: schedule_unix_post
                   type: io.kestra.plugin.meta.facebook.SchedulePost
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
@@ -60,10 +48,8 @@ import java.util.Map;
                   message: "Scheduled post with timestamp"
                   scheduledPublishTime: "1735689600"
                   link: "https://example.com"
-                """
-        )
-    }
-)
+                """)
+})
 public class SchedulePost extends AbstractFacebookTask {
 
     @Schema(title = "Post Message", description = "The text content of the post")
@@ -96,23 +82,23 @@ public class SchedulePost extends AbstractFacebookTask {
         postData.put("scheduled_publish_time", scheduleTime);
 
         String jsonBody = JacksonMapper.ofJson().writeValueAsString(postData);
-        String fullUrl = url + (url.contains("?") ? "&" : "?") + "access_token="
-                + URLEncoder.encode(rToken, StandardCharsets.UTF_8);
 
         HttpRequest request = HttpRequest.builder()
-                .uri(URI.create(fullUrl))
                 .method("POST")
+                .uri(URI.create(url))
                 .body(HttpRequest.StringRequestBody.builder()
                         .content(jsonBody)
                         .contentType("application/json")
                         .build())
+                .addHeader("Authorization", "Bearer " + rToken)
+                .addHeader("Content-Type", "application/json")
                 .build();
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
 
         try (HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
                 .configuration(httpConfiguration)
+                .runContext(runContext)
                 .build()) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 

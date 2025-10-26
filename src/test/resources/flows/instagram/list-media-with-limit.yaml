@@ -1,0 +1,18 @@
+id: instagram_list_media_with_limit_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: list_media_with_limit
+    type: io.kestra.plugin.meta.instagram.ListMedia
+    igId: "17841467149546531"
+    accessToken: "test_access_token"
+    limit: 1
+    fields:
+      - ID
+      - MEDIA_TYPE
+      - MEDIA_URL
+      - PERMALINK
+      - THUMBNAIL_URL
+      - TIMESTAMP
+      - CAPTION
+    host: "{{ inputs.url }}"

@@ -2,30 +2,25 @@ package io.kestra.plugin.meta.facebook;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
+import io.kestra.plugin.meta.facebook.enums.DatePreset;
+import io.kestra.plugin.meta.facebook.enums.Period;
+import io.kestra.plugin.meta.facebook.enums.PostMetric;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.kestra.plugin.meta.facebook.enums.*;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import lombok.Builder;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
-
 @SuperBuilder
 @NoArgsConstructor
 @Getter
@@ -64,12 +59,14 @@ import java.util.*;
                   postIds:
                     - "123456789_987654321"
                   metrics:
-                    - "post_reactions_like_total"
-                    - "post_reactions_love_total"
-                    - "post_reactions_wow_total"
-                    - "post_reactions_haha_total"
-                    - "post_reactions_sorry_total"
-                    - "post_reactions_anger_total"
+                    - POST_REACTIONS_LIKE_TOTAL
+                    - POST_REACTIONS_LOVE_TOTAL
+                    - POST_REACTIONS_WOW_TOTAL
+                    - POST_REACTIONS_HAHA_TOTAL
+                    - POST_REACTIONS_SORRY_TOTAL
+                    - POST_REACTIONS_ANGER_TOTAL
+                    - POST_IMPRESSIONS
+                    - POST_ENGAGED_USERS
                   period: "lifetime"
                 """
         ),
@@ -108,19 +105,19 @@ public class GetPostInsights extends AbstractFacebookTask {
     @NotNull
     private Property<List<String>> postIds;
 
-    @Schema(title = "Date Preset", description = "Preset a date range, like last_week, yesterday. If since or until presents, it does not work.")
+    @Schema(title = "Date Preset", description = "Preset a date range, like last_week, yesterday. If since or until are present, date_preset is ignored.")
     @Builder.Default
     private Property<DatePreset> datePreset = Property.ofValue(DatePreset.TODAY);
 
-    @Schema(title = "Metrics", description = "List of specific metrics to retrieve. Default includes reaction metrics (like, love, wow, haha, sorry, anger, by_type_total). You can add more metrics like post_impressions, post_engaged_users, etc.", example = "[\"post_impressions\", \"post_engaged_users\"]")
+    @Schema(title = "Metrics", description = "List of specific metrics to retrieve. Default includes reaction metrics (like, love, wow, haha, sorry, anger). You can add more metrics like POST_IMPRESSIONS, POST_ENGAGED_USERS, etc.")
     @Builder.Default
-    private Property<List<String>> metrics = Property.ofValue(Arrays.asList(
-            "post_reactions_like_total",
-            "post_reactions_love_total",
-            "post_reactions_wow_total",
-            "post_reactions_haha_total",
-            "post_reactions_sorry_total",
-            "post_reactions_anger_total"));
+    private Property<List<PostMetric>> metrics = Property.ofValue(Arrays.asList(
+        PostMetric.POST_REACTIONS_LIKE_TOTAL,
+        PostMetric.POST_REACTIONS_LOVE_TOTAL,
+        PostMetric.POST_REACTIONS_WOW_TOTAL,
+        PostMetric.POST_REACTIONS_HAHA_TOTAL,
+        PostMetric.POST_REACTIONS_SORRY_TOTAL,
+        PostMetric.POST_REACTIONS_ANGER_TOTAL));
 
     @Schema(title = "Period", description = "The aggregation period for insights")
     @Builder.Default
@@ -139,9 +136,10 @@ public class GetPostInsights extends AbstractFacebookTask {
         List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
         List<PostInsightsData> results = new ArrayList<>();
 
+
         try (HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()) {
+            .runContext(runContext)
+            .build()) {
             for (String postId : rPostIds) {
                 try {
                     PostInsightsData postData = getPostInsights(runContext, httpClient, postId);
@@ -149,11 +147,11 @@ public class GetPostInsights extends AbstractFacebookTask {
                 } catch (Exception e) {
                     runContext.logger().error("Failed to retrieve insights for post ID: {}", postId, e);
                     results.add(PostInsightsData.builder()
-                            .postId(postId)
-                            .totalInsights(0)
-                            .insights(new ArrayList<>())
-                            .error("Failed: " + e.getMessage())
-                            .build());
+                        .postId(postId)
+                        .totalInsights(0)
+                        .insights(new ArrayList<>())
+                        .error("Failed: " + e.getMessage())
+                        .build());
                 }
             }
         }
@@ -161,19 +159,19 @@ public class GetPostInsights extends AbstractFacebookTask {
         int totalInsights = results.stream().mapToInt(PostInsightsData::getTotalInsights).sum();
 
         runContext.logger().info("Successfully processed {} posts with {} total insights", results.size(),
-                totalInsights);
+            totalInsights);
 
         return Output.builder()
-                .posts(results)
-                .totalPosts(results.size())
-                .totalInsights(totalInsights)
-                .build();
+            .posts(results)
+            .totalPosts(results.size())
+            .totalInsights(totalInsights)
+            .build();
     }
 
     private PostInsightsData getPostInsights(RunContext runContext, HttpClient httpClient, String postId)
-            throws Exception {
+        throws Exception {
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
-        List<String> rMetrics = runContext.render(this.metrics).asList(String.class);
+        List<PostMetric> rMetrics = runContext.render(this.metrics).asList(PostMetric.class);
         Period rPeriod = runContext.render(this.period).as(Period.class).orElse(Period.LIFETIME);
         String rSince = runContext.render(this.since).as(String.class).orElse("");
         String rUntil = runContext.render(this.until).as(String.class).orElse("");
@@ -183,30 +181,32 @@ public class GetPostInsights extends AbstractFacebookTask {
         urlBuilder.append(buildApiUrl(runContext, postId + "/insights"));
         urlBuilder.append("?period=").append(rPeriod.name().toLowerCase());
 
-            String metricsStr = String.join(",", rMetrics);
-            urlBuilder.append("&metric=").append(URLEncoder.encode(metricsStr, StandardCharsets.UTF_8));
+        String metricsStr = rMetrics.stream()
+            .map(metric -> metric.name().toLowerCase())
+            .collect(java.util.stream.Collectors.joining(","));
+        urlBuilder.append("&metric=").append(metricsStr);
 
         if (rDatePreset != null && rSince.isEmpty() && rUntil.isEmpty()) {
             urlBuilder.append("&date_preset=").append(rDatePreset.name().toLowerCase());
         }
 
-            urlBuilder.append("&since=").append(URLEncoder.encode(rSince, StandardCharsets.UTF_8));
+        urlBuilder.append("&since=").append(rSince);
 
-            urlBuilder.append("&until=").append(URLEncoder.encode(rUntil, StandardCharsets.UTF_8));
+        urlBuilder.append("&until=").append(rUntil);
 
-        urlBuilder.append("&access_token=").append(URLEncoder.encode(rToken, StandardCharsets.UTF_8));
         String fullUrl = urlBuilder.toString();
 
         HttpRequest request = HttpRequest.builder()
-                .uri(URI.create(fullUrl))
-                .method("GET")
-                .build();
+            .uri(URI.create(fullUrl))
+            .method("GET")
+            .addHeader("Authorization", "Bearer " + rToken)
+            .build();
 
         HttpResponse<String> response = httpClient.request(request, String.class);
 
         if (response.getStatus().getCode() != 200) {
             throw new RuntimeException(
-                    "Failed to get post insights: " + response.getStatus().getCode() + " - " + response.getBody());
+                "Failed to get post insights: " + response.getStatus().getCode() + " - " + response.getBody());
         }
 
         JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
@@ -234,12 +234,12 @@ public class GetPostInsights extends AbstractFacebookTask {
         }
 
         return PostInsightsData.builder()
-                .postId(postId)
-                .totalInsights(insights.size())
-                .insights(insights)
-                .insightsSummary(insightsSummary)
-                .period(period)
-                .build();
+            .postId(postId)
+            .totalInsights(insights.size())
+            .insights(insights)
+            .insightsSummary(insightsSummary)
+            .period(period)
+            .build();
     }
 
     @Builder

@@ -9,4 +9,7 @@ tasks:
     postIds:
       - "123456789_987654321"
       - "123456789_987654322"
+    metrics:
+      - POST_REACTIONS_LIKE_TOTAL
+      - POST_REACTIONS_LOVE_TOTAL
     apiBaseUrl: "{{ inputs.url }}"

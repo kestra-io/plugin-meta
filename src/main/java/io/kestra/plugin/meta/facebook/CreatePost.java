@@ -2,15 +2,14 @@ package io.kestra.plugin.meta.facebook;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -19,8 +18,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,41 +87,42 @@ public class CreatePost extends AbstractFacebookTask {
         postData.put("published", Boolean.TRUE);
 
         String jsonBody = JacksonMapper.ofJson().writeValueAsString(postData);
-        String fullUrl = url + (url.contains("?") ? "&" : "?") + "access_token="
-                + URLEncoder.encode(rToken, StandardCharsets.UTF_8);
 
         HttpRequest request = HttpRequest.builder()
-                .uri(URI.create(fullUrl))
-                .method("POST")
-                .body(HttpRequest.StringRequestBody.builder()
-                        .content(jsonBody)
-                        .contentType("application/json")
-                        .build())
-                .build();
+            .method("POST")
+            .uri(URI.create(url))
+            .body(HttpRequest.StringRequestBody.builder()
+                .content(jsonBody)
+                .build())
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Authorization", "Bearer " + rToken)
+            .build();
 
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
 
         try (HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .configuration(httpConfiguration)
-                .build()) {
+            .runContext(runContext)
+            .build()) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
-            if (response.getStatus().getCode() != 200) {
+            int statusCode = response.getStatus().getCode();
+            if (statusCode < 200 || statusCode >= 300) {
                 throw new RuntimeException(
-                        "Failed to create post: " + response.getStatus().getCode() + " - " + response.getBody());
+                    "Failed to create post: " + statusCode + " - " + response.getBody());
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            String postId = responseJson.get("id").asText();
-
+            JsonNode idNode = responseJson.get("id");
+            if (idNode == null) {
+                throw new RuntimeException("Response missing 'id' field: " + response.getBody());
+            }
+            String postId = idNode.asText();
             runContext.logger().info("Successfully created Facebook post with ID: {}", postId);
 
             return Output.builder()
-                    .postId(postId)
-                    .message(postData.get("message") != null ? postData.get("message").toString() : null)
-                    .link(postData.get("link") != null ? postData.get("link").toString() : null)
-                    .build();
+                .postId(postId)
+                .message(postData.get("message") != null ? postData.get("message").toString() : null)
+                .link(postData.get("link") != null ? postData.get("link").toString() : null)
+                .build();
         }
     }
 

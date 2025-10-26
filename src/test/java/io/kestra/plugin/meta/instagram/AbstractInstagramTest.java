@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.instagram;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -10,6 +10,7 @@ import io.kestra.core.runners.TestRunner;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
@@ -26,13 +27,13 @@ import java.util.concurrent.TimeoutException;
 
 @KestraTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractFacebookTest implements TestPropertyProvider {
+public abstract class AbstractInstagramTest implements TestPropertyProvider {
 
     @Override
     public Map<String, String> getProperties() {
         return Map.of(
-                "mock.facebook.enabled", "true",
-                "mock.instagram.enabled", "false");
+                "mock.instagram.enabled", "true",
+                "mock.facebook.enabled", "false");
     }
 
     @Inject
@@ -52,7 +53,7 @@ public abstract class AbstractFacebookTest implements TestPropertyProvider {
     @BeforeEach
     void setUp() throws IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("flows/facebook")));
+                this.getClass().getClassLoader().getResource("flows/instagram")));
         this.runner.run();
 
         embeddedServer = applicationContext.getBean(EmbeddedServer.class);

@@ -8,4 +8,7 @@ tasks:
     accessToken: "test_access_token"
     postIds:
       - "123456789_987654321"
+    metrics:
+      - POST_REACTIONS_LIKE_TOTAL
+      - POST_REACTIONS_LOVE_TOTAL
     apiBaseUrl: "{{ inputs.url }}"

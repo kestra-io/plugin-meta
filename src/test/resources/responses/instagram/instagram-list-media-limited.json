@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "id": "17954170374002653",
+      "media_type": "IMAGE",
+      "media_url": "https://example.com/image1.jpg",
+      "permalink": "https://www.instagram.com/p/example1/",
+      "timestamp": "2025-10-23T18:12:25+0000",
+      "caption": "Test image post"
+    }
+  ]
+}

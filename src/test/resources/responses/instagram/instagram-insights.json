@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "name": "likes",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 1
+        }
+      ],
+      "title": "Likes",
+      "description": "The number of likes on your post.",
+      "id": "17954170374002653/insights/likes/lifetime"
+    }
+  ]
+}
