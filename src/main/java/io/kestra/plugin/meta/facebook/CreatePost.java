@@ -76,13 +76,8 @@ public class CreatePost extends AbstractFacebookTask {
 
         Map<String, Object> postData = new HashMap<>();
 
-        if (this.message != null) {
-            runContext.render(this.message).as(String.class).ifPresent(msg -> postData.put("message", msg));
-        }
-
-        if (this.link != null) {
-            runContext.render(this.link).as(String.class).ifPresent(linkUrl -> postData.put("link", linkUrl));
-        }
+        runContext.render(this.message).as(String.class).ifPresent(msg -> postData.put("message", msg));
+        runContext.render(this.link).as(String.class).ifPresent(linkUrl -> postData.put("link", linkUrl));
 
         postData.put("published", Boolean.TRUE);
 

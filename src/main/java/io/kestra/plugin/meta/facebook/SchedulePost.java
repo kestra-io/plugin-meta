@@ -10,7 +10,6 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -69,13 +68,9 @@ public class SchedulePost extends AbstractFacebookTask {
 
         Map<String, Object> postData = new HashMap<>();
 
-        if (this.message != null) {
             runContext.render(this.message).as(String.class).ifPresent(msg -> postData.put("message", msg));
-        }
 
-        if (this.link != null) {
             runContext.render(this.link).as(String.class).ifPresent(linkUrl -> postData.put("link", linkUrl));
-        }
 
         String scheduleTime = runContext.render(this.scheduledPublishTime).as(String.class).orElseThrow();
         postData.put("published", false);
@@ -94,10 +89,7 @@ public class SchedulePost extends AbstractFacebookTask {
                 .addHeader("Content-Type", "application/json")
                 .build();
 
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
-
         try (HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
                 .runContext(runContext)
                 .build()) {
             HttpResponse<String> response = httpClient.request(request, String.class);

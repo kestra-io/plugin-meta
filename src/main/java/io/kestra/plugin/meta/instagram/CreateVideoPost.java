@@ -76,15 +76,12 @@ public class CreateVideoPost extends AbstractInstagramTask {
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rVideoUrl = runContext.render(this.videoUrl).as(String.class).orElseThrow();
         MediaType rMediaType = runContext.render(this.mediaType).as(MediaType.class).orElse(MediaType.VIDEO);
+        String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
         runContext.logger().info("Creating Instagram {} post with video from: {}", rMediaType, rVideoUrl);
 
-        String captionText = null;
-        if (this.caption != null) {
-            captionText = runContext.render(this.caption).as(String.class).orElse(null);
-        }
 
-        String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rMediaType, captionText);
+        String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rMediaType, rCaptionText);
         runContext.logger().info("Media container created with ID: {}", containerId);
 
         // Wait for video processing to complete
@@ -99,7 +96,7 @@ public class CreateVideoPost extends AbstractInstagramTask {
             .mediaId(mediaId)
             .containerId(containerId)
             .videoUrl(rVideoUrl)
-            .caption(captionText)
+            .caption(rCaptionText)
             .mediaType(rMediaType.name())
             .build();
     }

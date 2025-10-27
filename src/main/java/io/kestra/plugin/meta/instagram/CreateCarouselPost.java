@@ -73,10 +73,7 @@ public class CreateCarouselPost extends AbstractInstagramTask {
             throw new IllegalArgumentException("Carousel must contain between 2 and 10 media items");
         }
 
-        String captionText = null;
-        if (this.caption != null) {
-            captionText = runContext.render(this.caption).as(String.class).orElse(null);
-        }
+        String captionText = runContext.render(this.caption).as(String.class).orElse(null);
 
         List<String> childContainerIds = new ArrayList<>();
         for (String mediaUrl : rMediaUrls) {

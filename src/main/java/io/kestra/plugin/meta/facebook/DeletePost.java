@@ -66,7 +66,7 @@ public class DeletePost extends AbstractFacebookTask {
 
     @Schema(title = "Post IDs", description = "List of post IDs to delete (format: pageId_postId)")
     @NotNull
-    protected Property<java.util.List<String>> postIds;
+    protected Property<List<String>> postIds;
 
     @Override
     public Output run(RunContext runContext) throws Exception {

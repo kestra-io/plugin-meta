@@ -64,11 +64,7 @@ public class CreateImagePost extends AbstractInstagramTask {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rImageUrl = runContext.render(this.imageUrl).as(String.class).orElseThrow();
-
-        String captionText = null;
-        if (this.caption != null) {
-            captionText = runContext.render(this.caption).as(String.class).orElse(null);
-        }
+        String captionText = runContext.render(this.caption).as(String.class).orElse(null);
 
         String containerId = createMediaContainer(runContext, rIgId, rToken, rImageUrl, captionText);
         String mediaId = publishMedia(runContext, rIgId, rToken, containerId);

@@ -50,9 +50,6 @@ dependencies {
     compileOnly group: "io.kestra", name: "core", version: kestraVersion
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
 
-    // http client
-    implementation "com.fasterxml.jackson.core:jackson-databind"
-    implementation("io.micronaut:micronaut-http-client-jdk")
     implementation("org.awaitility:awaitility:4.3.0")
 }
 

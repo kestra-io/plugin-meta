@@ -76,18 +76,14 @@ public class ListPosts extends AbstractFacebookTask {
 
         boolean hasParams = false;
 
-        if (this.fields != null) {
             String rFields = runContext.render(this.fields).as(String.class).orElse(null);
             if (rFields != null && !rFields.isEmpty()) {
                 urlBuilder.append("?fields=").append(rFields);
                 hasParams = true;
             }
-        }
 
-        if (this.limit != null) {
             Integer rLimit = runContext.render(this.limit).as(Integer.class).orElse(1);
             urlBuilder.append(hasParams ? "&" : "?").append("limit=").append(rLimit);
-        }
 
         String fullUrl = urlBuilder.toString();
 
