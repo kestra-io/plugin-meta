@@ -1,9 +1,10 @@
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.facebook.posts;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.plugin.meta.facebook.AbstractFacebookTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -12,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
-class CreatePostTest extends AbstractFacebookTest {
+class CreateTest extends AbstractFacebookTest {
 
     @Test
     void createSimplePost() throws TimeoutException, QueueException {

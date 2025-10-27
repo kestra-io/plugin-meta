@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: delete_multiple_posts
-    type: io.kestra.plugin.meta.facebook.DeletePost
+    type: io.kestra.plugin.meta.facebook.posts.Delete
     pageId: "123456789"
     accessToken: "test_access_token"
     postIds:

@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.facebook.posts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -40,7 +41,7 @@ import java.util.Map;
 
                 tasks:
                   - id: create_post
-                    type: io.kestra.plugin.meta.facebook.CreatePost
+                    type: io.kestra.plugin.meta.facebook.posts.Create
                     pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     message: "Hello from Kestra! This is an automated post."
@@ -51,7 +52,7 @@ import java.util.Map;
             full = true,
             code = """
                 - id: create_post_with_link
-                  type: io.kestra.plugin.meta.facebook.CreatePost
+                  type: io.kestra.plugin.meta.facebook.posts.Create
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   message: "Check out this amazing automation platform!"
@@ -60,7 +61,7 @@ import java.util.Map;
         )
     }
 )
-public class CreatePost extends AbstractFacebookTask {
+public class Create extends AbstractFacebookTask {
 
     @Schema(title = "Post Message", description = "The text content of the post")
     protected Property<String> message;

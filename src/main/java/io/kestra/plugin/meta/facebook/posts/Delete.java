@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.facebook.posts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -39,7 +40,7 @@ import java.util.List;
 
                 tasks:
                   - id: delete_post
-                    type: io.kestra.plugin.meta.facebook.DeletePost
+                    type: io.kestra.plugin.meta.facebook.posts.Delete
                     pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     postIds:
@@ -51,7 +52,7 @@ import java.util.List;
             full = true,
             code = """
                 - id: delete_multiple_posts
-                  type: io.kestra.plugin.meta.facebook.DeletePost
+                  type: io.kestra.plugin.meta.facebook.posts.Delete
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   postIds:
@@ -62,7 +63,7 @@ import java.util.List;
         )
     }
 )
-public class DeletePost extends AbstractFacebookTask {
+public class Delete extends AbstractFacebookTask {
 
     @Schema(title = "Post IDs", description = "List of post IDs to delete (format: pageId_postId)")
     @NotNull
