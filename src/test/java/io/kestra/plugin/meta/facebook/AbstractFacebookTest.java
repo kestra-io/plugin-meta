@@ -13,7 +13,6 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 
@@ -31,8 +30,8 @@ public abstract class AbstractFacebookTest implements TestPropertyProvider {
     @Override
     public Map<String, String> getProperties() {
         return Map.of(
-                "mock.facebook.enabled", "true",
-                "mock.instagram.enabled", "false");
+            "mock.facebook.enabled", "true",
+            "mock.instagram.enabled", "false");
     }
 
     @Inject
@@ -52,7 +51,7 @@ public abstract class AbstractFacebookTest implements TestPropertyProvider {
     @BeforeEach
     void setUp() throws IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("flows/facebook")));
+            this.getClass().getClassLoader().getResource("flows/facebook")));
         this.runner.run();
 
         embeddedServer = applicationContext.getBean(EmbeddedServer.class);
@@ -68,11 +67,11 @@ public abstract class AbstractFacebookTest implements TestPropertyProvider {
 
     protected Execution runFlow(String flowId) throws TimeoutException, QueueException {
         return runnerUtils.runOne(
-                TenantService.MAIN_TENANT,
-                "io.kestra.tests",
-                flowId,
-                null,
-                (f, e) -> ImmutableMap.of("url", embeddedServer.getURI().toString()),
-                Duration.ofMinutes(10));
+            TenantService.MAIN_TENANT,
+            "io.kestra.tests",
+            flowId,
+            null,
+            (f, e) -> ImmutableMap.of("url", embeddedServer.getURI().toString()),
+            Duration.ofMinutes(10));
     }
 }

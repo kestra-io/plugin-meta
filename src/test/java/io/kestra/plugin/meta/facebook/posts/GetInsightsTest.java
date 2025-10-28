@@ -35,7 +35,7 @@ class GetInsightsTest extends AbstractFacebookTest {
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> posts = (List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
-                .get("posts");
+            .get("posts");
 
         assertThat(posts, notNullValue());
         assertThat(posts, hasSize(greaterThan(0)));
@@ -48,16 +48,16 @@ class GetInsightsTest extends AbstractFacebookTest {
         RunContext runContext = runContextFactory.of();
 
         GetInsights task = GetInsights.builder()
-                .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
-                .pageId(Property.ofValue("mock-page-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .postIds(Property.ofValue(List.of("123456789_987654321")))
-                .metrics(Property.ofValue(List.of(
-                        PostMetric.POST_IMPRESSIONS,
-                        PostMetric.POST_ENGAGED_USERS,
-                        PostMetric.POST_CLICKS)))
-                .datePreset(Property.ofValue(DatePreset.LAST_7D))
-                .build();
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .postIds(Property.ofValue(List.of("123456789_987654321")))
+            .metrics(Property.ofValue(List.of(
+                PostMetric.POST_IMPRESSIONS,
+                PostMetric.POST_ENGAGED_USERS,
+                PostMetric.POST_CLICKS)))
+            .datePreset(Property.ofValue(DatePreset.LAST_7D))
+            .build();
 
         GetInsights.Output output = task.run(runContext);
 

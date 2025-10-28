@@ -37,12 +37,12 @@ class CreateImageTest extends AbstractInstagramTest {
         RunContext runContext = runContextFactory.of();
 
         CreateImage task = CreateImage.builder()
-                .host(Property.ofValue(embeddedServer.getURL().toString()))
-                .igId(Property.ofValue("mock-ig-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .imageUrl(Property.ofValue("https://example.com/test-image.jpg"))
-                .caption(Property.ofValue("Test image post with caption from Kestra automation"))
-                .build();
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .imageUrl(Property.ofValue("https://example.com/test-image.jpg"))
+            .caption(Property.ofValue("Test image post with caption from Kestra automation"))
+            .build();
 
         CreateImage.Output output = task.run(runContext);
 

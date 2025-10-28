@@ -10,11 +10,9 @@ import io.kestra.core.runners.TestRunner;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 
@@ -32,8 +30,8 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
     @Override
     public Map<String, String> getProperties() {
         return Map.of(
-                "mock.instagram.enabled", "true",
-                "mock.facebook.enabled", "false");
+            "mock.instagram.enabled", "true",
+            "mock.facebook.enabled", "false");
     }
 
     @Inject
@@ -53,7 +51,7 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
     @BeforeEach
     void setUp() throws IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(
-                this.getClass().getClassLoader().getResource("flows/instagram")));
+            this.getClass().getClassLoader().getResource("flows/instagram")));
         this.runner.run();
 
         embeddedServer = applicationContext.getBean(EmbeddedServer.class);
@@ -69,11 +67,11 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
 
     protected Execution runFlow(String flowId) throws TimeoutException, QueueException {
         return runnerUtils.runOne(
-                TenantService.MAIN_TENANT,
-                "io.kestra.tests",
-                flowId,
-                null,
-                (f, e) -> ImmutableMap.of("url", embeddedServer.getURI().toString()),
-                Duration.ofMinutes(10));
+            TenantService.MAIN_TENANT,
+            "io.kestra.tests",
+            flowId,
+            null,
+            (f, e) -> ImmutableMap.of("url", embeddedServer.getURI().toString()),
+            Duration.ofMinutes(10));
     }
 }

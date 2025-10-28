@@ -37,12 +37,12 @@ class CreateTest extends AbstractFacebookTest {
         RunContext runContext = runContextFactory.of();
 
         Create task = Create.builder()
-                .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
-                .pageId(Property.ofValue("mock-page-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .message(Property.ofValue("Check out this amazing automation platform!"))
-                .link(Property.ofValue("https://kestra.io"))
-                .build();
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .message(Property.ofValue("Check out this amazing automation platform!"))
+            .link(Property.ofValue("https://kestra.io"))
+            .build();
 
         Create.Output output = task.run(runContext);
 

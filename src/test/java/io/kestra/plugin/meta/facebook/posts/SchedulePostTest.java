@@ -39,12 +39,12 @@ class SchedulePostTest extends AbstractFacebookTest {
         long futureTimestamp = System.currentTimeMillis() / 1000 + 86400;
 
         SchedulePost task = SchedulePost.builder()
-                .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
-                .pageId(Property.ofValue("mock-page-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .message(Property.ofValue("This post is scheduled for the future!"))
-                .scheduledPublishTime(Property.ofValue(String.valueOf(futureTimestamp)))
-                .build();
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .message(Property.ofValue("This post is scheduled for the future!"))
+            .scheduledPublishTime(Property.ofValue(String.valueOf(futureTimestamp)))
+            .build();
 
         SchedulePost.Output output = task.run(runContext);
 

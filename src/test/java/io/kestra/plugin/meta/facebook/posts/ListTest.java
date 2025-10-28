@@ -33,7 +33,7 @@ class ListTest extends AbstractFacebookTest {
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> rows = (List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
-                .get("rows");
+            .get("rows");
         assertThat(rows, notNullValue());
         assertThat(rows, hasSize(2));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("size"), is(2));
@@ -44,11 +44,11 @@ class ListTest extends AbstractFacebookTest {
         RunContext runContext = runContextFactory.of();
 
         io.kestra.plugin.meta.facebook.posts.List task = io.kestra.plugin.meta.facebook.posts.List.builder()
-                .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
-                .pageId(Property.ofValue("mock-page-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .limit(Property.ofValue(5))
-                .build();
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .limit(Property.ofValue(5))
+            .build();
 
         io.kestra.plugin.meta.facebook.posts.List.Output output = task.run(runContext);
 

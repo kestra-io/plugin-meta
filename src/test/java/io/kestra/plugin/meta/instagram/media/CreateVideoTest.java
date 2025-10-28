@@ -38,13 +38,13 @@ class CreateVideoTest extends AbstractInstagramTest {
         RunContext runContext = runContextFactory.of();
 
         CreateVideo task = CreateVideo.builder()
-                .host(Property.ofValue(embeddedServer.getURL().toString()))
-                .igId(Property.ofValue("mock-ig-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .videoUrl(Property.ofValue("https://example.com/test-reel.mp4"))
-                .videoType(Property.ofValue(VideoType.REELS))
-                .caption(Property.ofValue("Check out this awesome reel! #automation #kestra"))
-                .build();
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .videoUrl(Property.ofValue("https://example.com/test-reel.mp4"))
+            .videoType(Property.ofValue(VideoType.REELS))
+            .caption(Property.ofValue("Check out this awesome reel! #automation #kestra"))
+            .build();
 
         CreateVideo.Output output = task.run(runContext);
 

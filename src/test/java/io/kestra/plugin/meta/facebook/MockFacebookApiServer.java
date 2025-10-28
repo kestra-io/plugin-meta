@@ -18,34 +18,34 @@ public class MockFacebookApiServer {
 
     @Post("/{pageId}/feed")
     public HttpResponse<String> createPost(@PathVariable String pageId,
-            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
+                                           @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
         return HttpResponse.ok("{\"id\": \"123456789_987654321\"}");
     }
 
     @Delete("/{postId}")
     public HttpResponse<String> deletePost(@PathVariable String postId,
-            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
+                                           @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
         return HttpResponse.ok("{\"success\": true}");
     }
 
     @Get("/{pageId}/feed")
     public HttpResponse<String> listPosts(@PathVariable String pageId,
-            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization)
-            throws IOException {
+                                          @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization)
+        throws IOException {
         return HttpResponse.ok(IOUtils.toString(
-                Objects.requireNonNull(
-                        MockFacebookApiServer.class.getClassLoader().getResourceAsStream(
-                                "responses/facebook/list-posts.json")),
-                StandardCharsets.UTF_8));
+            Objects.requireNonNull(
+                MockFacebookApiServer.class.getClassLoader().getResourceAsStream(
+                    "responses/facebook/list-posts.json")),
+            StandardCharsets.UTF_8));
     }
 
     @Get("/{postId}/insights")
     public HttpResponse<String> getPostInsights(@PathVariable String postId,
-            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization)
-            throws IOException {
+                                                @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization)
+        throws IOException {
         return HttpResponse.ok(IOUtils.toString(
-                Objects.requireNonNull(MockFacebookApiServer.class.getClassLoader()
-                        .getResourceAsStream("responses/facebook/post-insights.json")),
-                StandardCharsets.UTF_8));
+            Objects.requireNonNull(MockFacebookApiServer.class.getClassLoader()
+                .getResourceAsStream("responses/facebook/post-insights.json")),
+            StandardCharsets.UTF_8));
     }
 }

@@ -43,17 +43,17 @@ class ListTest extends AbstractInstagramTest {
         RunContext runContext = runContextFactory.of();
 
         io.kestra.plugin.meta.instagram.media.List task = io.kestra.plugin.meta.instagram.media.List.builder()
-                .host(Property.ofValue(embeddedServer.getURL().toString()))
-                .igId(Property.ofValue("mock-ig-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .fields(Property.ofValue(List.of(
-                        MediaField.ID,
-                        MediaField.CAPTION,
-                        MediaField.MEDIA_TYPE,
-                        MediaField.TIMESTAMP,
-                        MediaField.PERMALINK)))
-                .limit(Property.ofValue(10))
-                .build();
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .fields(Property.ofValue(List.of(
+                MediaField.ID,
+                MediaField.CAPTION,
+                MediaField.MEDIA_TYPE,
+                MediaField.TIMESTAMP,
+                MediaField.PERMALINK)))
+            .limit(Property.ofValue(10))
+            .build();
 
         io.kestra.plugin.meta.instagram.media.List.Output output = task.run(runContext);
 

@@ -45,15 +45,15 @@ class GetInsightsTest extends AbstractInstagramTest {
         RunContext runContext = runContextFactory.of();
 
         GetInsights task = GetInsights.builder()
-                .host(Property.ofValue(embeddedServer.getURL().toString()))
-                .igId(Property.ofValue("mock-ig-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .mediaId(Property.ofValue("17954170374002653"))
-                .metrics(Property.ofValue(List.of(
-                        InsightMetric.IMPRESSIONS,
-                        InsightMetric.REACH,
-                        InsightMetric.SAVES)))
-                .build();
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .mediaId(Property.ofValue("17954170374002653"))
+            .metrics(Property.ofValue(List.of(
+                InsightMetric.IMPRESSIONS,
+                InsightMetric.REACH,
+                InsightMetric.SAVES)))
+            .build();
 
         GetInsights.Output output = task.run(runContext);
 

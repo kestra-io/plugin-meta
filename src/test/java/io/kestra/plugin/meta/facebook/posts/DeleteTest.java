@@ -32,7 +32,7 @@ class DeleteTest extends AbstractFacebookTest {
 
         @SuppressWarnings("unchecked")
         List<String> deletedPostIds = (List<String>) execution.getTaskRunList().getFirst().getOutputs()
-                .get("deletedPostIds");
+            .get("deletedPostIds");
         assertThat(deletedPostIds, hasSize(3));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("totalDeleted"), is(3));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("allSuccess"), is(true));
@@ -43,11 +43,11 @@ class DeleteTest extends AbstractFacebookTest {
         RunContext runContext = runContextFactory.of();
 
         Delete task = Delete.builder()
-                .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
-                .pageId(Property.ofValue("mock-page-id"))
-                .accessToken(Property.ofValue("mock-access-token"))
-                .postIds(Property.ofValue(List.of("123456789_987654321")))
-                .build();
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .postIds(Property.ofValue(List.of("123456789_987654321")))
+            .build();
 
         Delete.Output output = task.run(runContext);
 

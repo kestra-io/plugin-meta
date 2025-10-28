@@ -21,44 +21,44 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class CreateCarouselTest extends AbstractInstagramTest {
 
-        @Inject
-        private RunContextFactory runContextFactory;
+    @Inject
+    private RunContextFactory runContextFactory;
 
-        @Test
-        void createCarouselSuccess() throws TimeoutException, QueueException {
-                Execution execution = runFlow("instagram_create_carousel_test");
+    @Test
+    void createCarouselSuccess() throws TimeoutException, QueueException {
+        Execution execution = runFlow("instagram_create_carousel_test");
 
-                assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(execution.getTaskRunList(), hasSize(1));
-                assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
-        }
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
+    }
 
-        @Test
-        void createCarouselWithExcessiveMediaUrls() throws Exception {
-                RunContext runContext = runContextFactory.of();
+    @Test
+    void createCarouselWithExcessiveMediaUrls() throws Exception {
+        RunContext runContext = runContextFactory.of();
 
-                CreateCarousel task = CreateCarousel.builder()
-                                .host(Property.ofValue(embeddedServer.getURL().toString()))
-                                .igId(Property.ofValue("mock-ig-id"))
-                                .accessToken(Property.ofValue("mock-access-token"))
-                                .mediaUrls(Property.ofValue(List.of(
-                                                "https://example.com/1.jpg",
-                                                "https://example.com/2.jpg",
-                                                "https://example.com/3.jpg",
-                                                "https://example.com/4.jpg",
-                                                "https://example.com/5.jpg",
-                                                "https://example.com/6.jpg",
-                                                "https://example.com/7.jpg",
-                                                "https://example.com/8.jpg",
-                                                "https://example.com/9.jpg",
-                                                "https://example.com/10.jpg",
-                                                "https://example.com/11.jpg")))
-                                .caption(Property.ofValue("Test carousel"))
-                                .build();
+        CreateCarousel task = CreateCarousel.builder()
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .mediaUrls(Property.ofValue(List.of(
+                "https://example.com/1.jpg",
+                "https://example.com/2.jpg",
+                "https://example.com/3.jpg",
+                "https://example.com/4.jpg",
+                "https://example.com/5.jpg",
+                "https://example.com/6.jpg",
+                "https://example.com/7.jpg",
+                "https://example.com/8.jpg",
+                "https://example.com/9.jpg",
+                "https://example.com/10.jpg",
+                "https://example.com/11.jpg")))
+            .caption(Property.ofValue("Test carousel"))
+            .build();
 
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                                () -> task.run(runContext));
-                assertThat(exception.getMessage(),
-                                containsString("Carousel must contain between 2 and 10 media items"));
-        }
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> task.run(runContext));
+        assertThat(exception.getMessage(),
+            containsString("Carousel must contain between 2 and 10 media items"));
+    }
 }
