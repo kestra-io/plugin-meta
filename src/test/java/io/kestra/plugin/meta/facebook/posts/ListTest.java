@@ -11,7 +11,6 @@ import io.kestra.plugin.meta.facebook.AbstractFacebookTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -32,7 +31,7 @@ class ListTest extends AbstractFacebookTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> rows = (List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
+        java.util.List<Map<String, Object>> rows = (java.util.List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
             .get("rows");
         assertThat(rows, notNullValue());
         assertThat(rows, hasSize(2));
@@ -43,14 +42,14 @@ class ListTest extends AbstractFacebookTest {
     void listPostsWithLimit() throws Exception {
         RunContext runContext = runContextFactory.of();
 
-        io.kestra.plugin.meta.facebook.posts.List task = io.kestra.plugin.meta.facebook.posts.List.builder()
+        List task = io.kestra.plugin.meta.facebook.posts.List.builder()
             .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
             .pageId(Property.ofValue("mock-page-id"))
             .accessToken(Property.ofValue("mock-access-token"))
             .limit(Property.ofValue(5))
             .build();
 
-        io.kestra.plugin.meta.facebook.posts.List.Output output = task.run(runContext);
+        List.Output output = task.run(runContext);
 
         assertThat(output, notNullValue());
         assertThat(output.getRows(), notNullValue());

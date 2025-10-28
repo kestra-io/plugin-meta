@@ -11,8 +11,6 @@ import io.kestra.plugin.meta.instagram.AbstractInstagramTest;
 import io.kestra.plugin.meta.instagram.enums.MediaField;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,7 +30,7 @@ class ListTest extends AbstractInstagramTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        List<Object> rows = (List<Object>) execution.getTaskRunList().getFirst().getOutputs().get("rows");
+        java.util.List<Object> rows = (java.util.List<Object>) execution.getTaskRunList().getFirst().getOutputs().get("rows");
         assertThat(rows, notNullValue());
         assertThat(rows, hasSize(2));
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("size"), is(2));
@@ -42,11 +40,11 @@ class ListTest extends AbstractInstagramTest {
     void listMediaWithSpecificFields() throws Exception {
         RunContext runContext = runContextFactory.of();
 
-        io.kestra.plugin.meta.instagram.media.List task = io.kestra.plugin.meta.instagram.media.List.builder()
+        List task = io.kestra.plugin.meta.instagram.media.List.builder()
             .host(Property.ofValue(embeddedServer.getURL().toString()))
             .igId(Property.ofValue("mock-ig-id"))
             .accessToken(Property.ofValue("mock-access-token"))
-            .fields(Property.ofValue(List.of(
+            .fields(Property.ofValue(java.util.List.of(
                 MediaField.ID,
                 MediaField.CAPTION,
                 MediaField.MEDIA_TYPE,
