@@ -1,9 +1,9 @@
-id: facebook_schedule_post_test
+id: facebook_schedule_posts_test
 namespace: io.kestra.tests
 
 tasks:
-  - id: schedule_post
-    type: io.kestra.plugin.meta.facebook.SchedulePost
+  - id: schedule_posts
+    type: io.kestra.plugin.meta.facebook.posts.SchedulePost
     pageId: "123456789"
     accessToken: "test_access_token"
     message: "This is a scheduled post"

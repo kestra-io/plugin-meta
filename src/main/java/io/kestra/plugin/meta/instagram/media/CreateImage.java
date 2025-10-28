@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.instagram;
+package io.kestra.plugin.meta.instagram.media;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -41,7 +42,7 @@ import java.util.Map;
 
                 tasks:
                   - id: create_image_post
-                    type: io.kestra.plugin.meta.instagram.CreateImagePost
+                    type: io.kestra.plugin.meta.instagram.media.CreateImage
                     igId: "{{ secret('INSTAGRAM_ACCOUNT_ID') }}"
                     accessToken: "{{ secret('INSTAGRAM_ACCESS_TOKEN') }}"
                     imageUrl: "https://example.com/image.jpg"
@@ -50,7 +51,7 @@ import java.util.Map;
         )
     }
 )
-public class CreateImagePost extends AbstractInstagramTask {
+public class CreateImage extends AbstractInstagramTask {
 
     @Schema(title = "Image URL", description = "Public URL of the image to upload (JPEG format only)")
     @NotNull
@@ -64,9 +65,9 @@ public class CreateImagePost extends AbstractInstagramTask {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rImageUrl = runContext.render(this.imageUrl).as(String.class).orElseThrow();
-        String captionText = runContext.render(this.caption).as(String.class).orElse(null);
+        String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
-        String containerId = createMediaContainer(runContext, rIgId, rToken, rImageUrl, captionText);
+        String containerId = createMediaContainer(runContext, rIgId, rToken, rImageUrl, rCaptionText);
         String mediaId = publishMedia(runContext, rIgId, rToken, containerId);
 
         runContext.logger().info("Successfully created Instagram image post with ID: {}", mediaId);
@@ -74,8 +75,6 @@ public class CreateImagePost extends AbstractInstagramTask {
         return Output.builder()
             .mediaId(mediaId)
             .containerId(containerId)
-            .imageUrl(rImageUrl)
-            .caption(captionText)
             .build();
     }
 
@@ -167,13 +166,5 @@ public class CreateImagePost extends AbstractInstagramTask {
         @Schema(title = "The ID of the media container")
         @JsonProperty("containerId")
         private final String containerId;
-
-        @Schema(title = "The URL of the uploaded image")
-        @JsonProperty("imageUrl")
-        private final String imageUrl;
-
-        @Schema(title = "The caption of the post")
-        @JsonProperty("caption")
-        private final String caption;
     }
 }

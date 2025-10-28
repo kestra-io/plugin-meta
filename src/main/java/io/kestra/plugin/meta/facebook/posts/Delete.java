@@ -49,7 +49,6 @@ import java.util.List;
         ),
         @Example(
             title = "Delete multiple Facebook posts",
-            full = true,
             code = """
                 - id: delete_multiple_posts
                   type: io.kestra.plugin.meta.facebook.posts.Delete
@@ -67,15 +66,15 @@ public class Delete extends AbstractFacebookTask {
 
     @Schema(title = "Post IDs", description = "List of post IDs to delete (format: pageId_postId)")
     @NotNull
-    protected Property<List<String>> postIds;
+    protected Property<java.util.List<String>> postIds;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
-        List<String> deletedPostIds = new ArrayList<>();
-        List<String> failedPostIds = new ArrayList<>();
+        java.util.List<String> deletedPostIds = new ArrayList<>();
+        java.util.List<String> failedPostIds = new ArrayList<>();
 
         try (HttpClient httpClient = HttpClient.builder()
             .runContext(runContext)

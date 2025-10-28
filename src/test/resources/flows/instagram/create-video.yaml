@@ -1,9 +1,9 @@
-id: instagram_create_video_post_test
+id: instagram_create_video_test
 namespace: io.kestra.tests
 
 tasks:
-  - id: create_video_post
-    type: io.kestra.plugin.meta.instagram.CreateVideoPost
+  - id: create_video
+    type: io.kestra.plugin.meta.instagram.media.CreateVideo
     igId: "17841467149546531"
     accessToken: "test_access_token"
     videoUrl: "https://example.com/test-video.mp4"

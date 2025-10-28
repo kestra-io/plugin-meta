@@ -12,6 +12,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -49,7 +50,6 @@ import java.util.Map;
         ),
         @Example(
             title = "Create a post with link",
-            full = true,
             code = """
                 - id: create_post_with_link
                   type: io.kestra.plugin.meta.facebook.posts.Create
@@ -64,6 +64,7 @@ import java.util.Map;
 public class Create extends AbstractFacebookTask {
 
     @Schema(title = "Post Message", description = "The text content of the post")
+    @NotNull
     protected Property<String> message;
 
     @Schema(title = "Link URL", description = "Optional link to include in the post")
@@ -77,8 +78,10 @@ public class Create extends AbstractFacebookTask {
 
         Map<String, Object> postData = new HashMap<>();
 
-        runContext.render(this.message).as(String.class).ifPresent(msg -> postData.put("message", msg));
-        runContext.render(this.link).as(String.class).ifPresent(linkUrl -> postData.put("link", linkUrl));
+        String rMessage = runContext.render(this.message).as(String.class).orElseThrow();
+        postData.put("message", rMessage);
+
+        runContext.render(this.link).as(String.class).ifPresent(rLinkUrl -> postData.put("link", rLinkUrl));
 
         postData.put("published", Boolean.TRUE);
 
@@ -116,8 +119,6 @@ public class Create extends AbstractFacebookTask {
 
             return Output.builder()
                 .postId(postId)
-                .message(postData.get("message") != null ? postData.get("message").toString() : null)
-                .link(postData.get("link") != null ? postData.get("link").toString() : null)
                 .build();
         }
     }
@@ -128,14 +129,5 @@ public class Create extends AbstractFacebookTask {
         @Schema(title = "The ID of the created post")
         @JsonProperty("postId")
         private final String postId;
-
-        @Schema(title = "The message content of the post")
-        @JsonProperty("message")
-        private final String message;
-
-        @Schema(title = "The link included in the post")
-        @JsonProperty("link")
-        private final String link;
-
     }
 }

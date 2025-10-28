@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.instagram;
+package io.kestra.plugin.meta.instagram.media;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.InsightMetric;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
 
                 tasks:
                   - id: get_insights
-                    type: io.kestra.plugin.meta.instagram.GetMediaInsights
+                    type: io.kestra.plugin.meta.instagram.media.GetInsights
                     igId: "{{ secret('INSTAGRAM_ACCOUNT_ID') }}"
                     accessToken: "{{ secret('INSTAGRAM_ACCESS_TOKEN') }}"
                     mediaId: "17954170374002653"
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
         )
     }
 )
-public class GetMediaInsights extends AbstractInstagramTask {
+public class GetInsights extends AbstractInstagramTask {
 
     @Schema(title = "Media ID", description = "The ID of the Instagram media to get insights for")
     @NotNull
@@ -63,7 +64,7 @@ public class GetMediaInsights extends AbstractInstagramTask {
     @Schema(title = "Metrics", description = "List of insight metrics to retrieve")
     @Builder.Default
     protected Property<List<InsightMetric>> metrics = Property.ofValue(
-        List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH));
+        java.util.List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH));
 
     @Override
     public Output run(RunContext runContext) throws Exception {

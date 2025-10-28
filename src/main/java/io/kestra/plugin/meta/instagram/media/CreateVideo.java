@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.instagram;
+package io.kestra.plugin.meta.instagram.media;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +12,8 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.plugin.meta.instagram.enums.MediaType;
+import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
+import io.kestra.plugin.meta.instagram.enums.VideoType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -47,17 +48,17 @@ import static org.awaitility.Awaitility.await;
 
                 tasks:
                   - id: create_video_post
-                    type: io.kestra.plugin.meta.instagram.CreateVideoPost
+                    type: io.kestra.plugin.meta.instagram.media.CreateVideo
                     igId: "{{ secret('INSTAGRAM_ACCOUNT_ID') }}"
                     accessToken: "{{ secret('INSTAGRAM_ACCESS_TOKEN') }}"
                     videoUrl: "https://example.com/video.mp4"
                     caption: "Check out this amazing video!"
-                    mediaType: REELS
+                    VideoType: REELS
                 """
         )
     }
 )
-public class CreateVideoPost extends AbstractInstagramTask {
+public class CreateVideo extends AbstractInstagramTask {
 
     @Schema(title = "Video URL", description = "Public URL of the video to upload")
     @NotNull
@@ -68,20 +69,20 @@ public class CreateVideoPost extends AbstractInstagramTask {
 
     @Schema(title = "Media Type", description = "Type of video media to create")
     @Builder.Default
-    protected Property<MediaType> mediaType = Property.ofValue(MediaType.VIDEO);
+    protected Property<VideoType> videoType = Property.ofValue(VideoType.VIDEO);
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rVideoUrl = runContext.render(this.videoUrl).as(String.class).orElseThrow();
-        MediaType rMediaType = runContext.render(this.mediaType).as(MediaType.class).orElse(MediaType.VIDEO);
+        VideoType rVideoType = runContext.render(this.videoType).as(VideoType.class).orElse(VideoType.VIDEO);
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
-        runContext.logger().info("Creating Instagram {} post with video from: {}", rMediaType, rVideoUrl);
+        runContext.logger().info("Creating Instagram {} post with video from: {}", rVideoType, rVideoUrl);
 
 
-        String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rMediaType, rCaptionText);
+        String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rVideoType, rCaptionText);
         runContext.logger().info("Media container created with ID: {}", containerId);
 
         // Wait for video processing to complete
@@ -95,19 +96,16 @@ public class CreateVideoPost extends AbstractInstagramTask {
         return Output.builder()
             .mediaId(mediaId)
             .containerId(containerId)
-            .videoUrl(rVideoUrl)
-            .caption(rCaptionText)
-            .mediaType(rMediaType.name())
             .build();
     }
 
     private String createMediaContainer(RunContext runContext, String igId, String token, String videoUrl,
-                                        MediaType mediaType, String caption) throws Exception {
+                                        VideoType VideoType, String caption) throws Exception {
         String url = buildApiUrl(runContext, igId + "/media");
 
         Map<String, Object> containerData = new HashMap<>();
         containerData.put("video_url", videoUrl);
-        containerData.put("media_type", mediaType.name());
+        containerData.put("media_type", VideoType.name());
 
         if (caption != null) {
             containerData.put("caption", caption);
@@ -254,17 +252,5 @@ public class CreateVideoPost extends AbstractInstagramTask {
         @Schema(title = "The ID of the media container")
         @JsonProperty("containerId")
         private final String containerId;
-
-        @Schema(title = "The URL of the uploaded video")
-        @JsonProperty("videoUrl")
-        private final String videoUrl;
-
-        @Schema(title = "The caption of the post")
-        @JsonProperty("caption")
-        private final String caption;
-
-        @Schema(title = "The media type of the post")
-        @JsonProperty("mediaType")
-        private final String mediaType;
     }
 }

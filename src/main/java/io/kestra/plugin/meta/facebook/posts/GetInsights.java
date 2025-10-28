@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.facebook.posts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.kestra.plugin.meta.facebook.enums.DatePreset;
 import io.kestra.plugin.meta.facebook.enums.Period;
 import io.kestra.plugin.meta.facebook.enums.PostMetric;
@@ -41,7 +42,7 @@ import java.util.*;
 
                 tasks:
                   - id: get_insights
-                    type: io.kestra.plugin.meta.facebook.GetPostInsights
+                    type: io.kestra.plugin.meta.facebook.posts.GetInsights
                     pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     postIds:
@@ -53,7 +54,7 @@ import java.util.*;
             title = "Add custom metrics to default reactions",
             code = """
                 - id: get_insights_with_custom_metrics
-                  type: io.kestra.plugin.meta.facebook.GetPostInsights
+                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   postIds:
@@ -74,7 +75,7 @@ import java.util.*;
             title = "Get insights with date preset",
             code = """
                 - id: get_insights_last_7_days
-                  type: io.kestra.plugin.meta.facebook.GetPostInsights
+                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   postIds:
@@ -87,7 +88,7 @@ import java.util.*;
             title = "Get insights with custom date range",
             code = """
                 - id: get_insights_custom_range
-                  type: io.kestra.plugin.meta.facebook.GetPostInsights
+                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   postIds:
@@ -99,11 +100,11 @@ import java.util.*;
         )
     }
 )
-public class GetPostInsights extends AbstractFacebookTask {
+public class GetInsights extends AbstractFacebookTask {
 
     @Schema(title = "Post IDs", description = "List of Facebook post IDs to get insights for (format: pageId_postId)")
     @NotNull
-    private Property<List<String>> postIds;
+    private Property<java.util.List<String>> postIds;
 
     @Schema(title = "Date Preset", description = "Preset a date range, like last_week, yesterday. If since or until are present, date_preset is ignored.")
     @Builder.Default
@@ -111,7 +112,7 @@ public class GetPostInsights extends AbstractFacebookTask {
 
     @Schema(title = "Metrics", description = "List of specific metrics to retrieve. Default includes reaction metrics (like, love, wow, haha, sorry, anger). You can add more metrics like POST_IMPRESSIONS, POST_ENGAGED_USERS, etc.")
     @Builder.Default
-    private Property<List<PostMetric>> metrics = Property.ofValue(Arrays.asList(
+    private Property<java.util.List<PostMetric>> metrics = Property.ofValue(Arrays.asList(
         PostMetric.POST_REACTIONS_LIKE_TOTAL,
         PostMetric.POST_REACTIONS_LOVE_TOTAL,
         PostMetric.POST_REACTIONS_WOW_TOTAL,
@@ -133,8 +134,8 @@ public class GetPostInsights extends AbstractFacebookTask {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
-        List<PostInsightsData> results = new ArrayList<>();
+        java.util.List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
+        java.util.List<PostInsightsData> results = new ArrayList<>();
 
 
         try (HttpClient httpClient = HttpClient.builder()
@@ -171,7 +172,7 @@ public class GetPostInsights extends AbstractFacebookTask {
     private PostInsightsData getPostInsights(RunContext runContext, HttpClient httpClient, String postId)
         throws Exception {
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
-        List<PostMetric> rMetrics = runContext.render(this.metrics).asList(PostMetric.class);
+        java.util.List<PostMetric> rMetrics = runContext.render(this.metrics).asList(PostMetric.class);
         Period rPeriod = runContext.render(this.period).as(Period.class).orElse(Period.LIFETIME);
         String rSince = runContext.render(this.since).as(String.class).orElse("");
         String rUntil = runContext.render(this.until).as(String.class).orElse("");
@@ -214,7 +215,7 @@ public class GetPostInsights extends AbstractFacebookTask {
     }
 
     private PostInsightsData parsePostInsights(String postId, JsonNode responseJson, String period) {
-        List<Map<String, Object>> insights = new ArrayList<>();
+        java.util.List<Map<String, Object>> insights = new ArrayList<>();
         Map<String, Object> insightsSummary = new HashMap<>();
 
         if (responseJson.has("data")) {
@@ -247,7 +248,7 @@ public class GetPostInsights extends AbstractFacebookTask {
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(title = "List of post insights data")
         @JsonProperty("posts")
-        private final List<PostInsightsData> posts;
+        private final java.util.List<PostInsightsData> posts;
 
         @Schema(title = "Total number of posts processed")
         @JsonProperty("totalPosts")
@@ -271,7 +272,7 @@ public class GetPostInsights extends AbstractFacebookTask {
 
         @Schema(title = "Detailed insights data")
         @JsonProperty("insights")
-        private final List<Map<String, Object>> insights;
+        private final java.util.List<Map<String, Object>> insights;
 
         @Schema(title = "Summary of insights by metric name")
         @JsonProperty("insightsSummary")

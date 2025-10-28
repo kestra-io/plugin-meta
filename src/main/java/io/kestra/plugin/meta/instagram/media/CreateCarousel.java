@@ -1,4 +1,4 @@
-package io.kestra.plugin.meta.instagram;
+package io.kestra.plugin.meta.instagram.media;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -42,7 +43,7 @@ import java.util.Map;
 
                 tasks:
                   - id: create_carousel_post
-                    type: io.kestra.plugin.meta.instagram.CreateCarouselPost
+                    type: io.kestra.plugin.meta.instagram.media.CreateCarousel
                     igId: "{{ secret('INSTAGRAM_ACCOUNT_ID') }}"
                     accessToken: "{{ secret('INSTAGRAM_ACCESS_TOKEN') }}"
                     mediaUrls:
@@ -54,7 +55,11 @@ import java.util.Map;
         )
     }
 )
-public class CreateCarouselPost extends AbstractInstagramTask {
+public class CreateCarousel extends AbstractInstagramTask {
+
+   // Minimum and Maximum number of media items allowed in an Instagram carousel (Meta API requirement).
+    private static final int MIN_CAROUSEL_ITEMS = 2;
+    private static final int MAX_CAROUSEL_ITEMS = 10;
 
     @Schema(title = "Media URLs", description = "List of public URLs for images and videos (2-10 items, JPEG for images)")
     @NotNull
@@ -69,11 +74,11 @@ public class CreateCarouselPost extends AbstractInstagramTask {
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         List<String> rMediaUrls = runContext.render(this.mediaUrls).asList(String.class);
 
-        if (rMediaUrls.size() < 2 || rMediaUrls.size() > 10) {
+        if (rMediaUrls.size() < MIN_CAROUSEL_ITEMS || rMediaUrls.size() > MAX_CAROUSEL_ITEMS) {
             throw new IllegalArgumentException("Carousel must contain between 2 and 10 media items");
         }
 
-        String captionText = runContext.render(this.caption).as(String.class).orElse(null);
+        String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
         List<String> childContainerIds = new ArrayList<>();
         for (String mediaUrl : rMediaUrls) {
@@ -82,7 +87,7 @@ public class CreateCarouselPost extends AbstractInstagramTask {
         }
 
         String carouselContainerId = createCarouselContainer(runContext, rIgId, rToken, childContainerIds,
-            captionText);
+            rCaptionText);
         String mediaId = publishMedia(runContext, rIgId, rToken, carouselContainerId);
 
         runContext.logger().info("Successfully created Instagram carousel post with ID: {}", mediaId);
@@ -91,8 +96,6 @@ public class CreateCarouselPost extends AbstractInstagramTask {
             .mediaId(mediaId)
             .carouselContainerId(carouselContainerId)
             .childContainerIds(childContainerIds)
-            .mediaUrls(rMediaUrls)
-            .caption(captionText)
             .build();
     }
 
@@ -231,12 +234,5 @@ public class CreateCarouselPost extends AbstractInstagramTask {
         @JsonProperty("childContainerIds")
         private final List<String> childContainerIds;
 
-        @Schema(title = "The URLs of the media items")
-        @JsonProperty("mediaUrls")
-        private final List<String> mediaUrls;
-
-        @Schema(title = "The caption of the carousel post")
-        @JsonProperty("caption")
-        private final String caption;
     }
 }

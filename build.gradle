@@ -181,8 +181,8 @@ jar {
     manifest {
         attributes(
                 "X-Kestra-Name": project.name,
-                "X-Kestra-Title": "Template",
-                "X-Kestra-Group": project.group + ".templates",
+                "X-Kestra-Title": "Meta",
+                "X-Kestra-Group": project.group + ".meta",
                 "X-Kestra-Description": project.description,
                 "X-Kestra-Version": project.version
         )

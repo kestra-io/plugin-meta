@@ -17,14 +17,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
-class CreateTest extends AbstractFacebookTest {
+class SchedulePostTest extends AbstractFacebookTest {
 
     @Inject
     private RunContextFactory runContextFactory;
 
     @Test
-    void createPostSuccess() throws TimeoutException, QueueException {
-        Execution execution = runFlow("facebook_create_post_test");
+    void schedulePostsSuccess() throws TimeoutException, QueueException {
+        Execution execution = runFlow("facebook_schedule_posts_test");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
@@ -33,18 +33,20 @@ class CreateTest extends AbstractFacebookTest {
     }
 
     @Test
-    void createPostWithLink() throws Exception {
+    void schedulePostWithFutureDate() throws Exception {
         RunContext runContext = runContextFactory.of();
 
-        Create task = Create.builder()
+        long futureTimestamp = System.currentTimeMillis() / 1000 + 86400;
+
+        SchedulePost task = SchedulePost.builder()
                 .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
                 .pageId(Property.ofValue("mock-page-id"))
                 .accessToken(Property.ofValue("mock-access-token"))
-                .message(Property.ofValue("Check out this amazing automation platform!"))
-                .link(Property.ofValue("https://kestra.io"))
+                .message(Property.ofValue("This post is scheduled for the future!"))
+                .scheduledPublishTime(Property.ofValue(String.valueOf(futureTimestamp)))
                 .build();
 
-        Create.Output output = task.run(runContext);
+        SchedulePost.Output output = task.run(runContext);
 
         assertThat(output, notNullValue());
         assertThat(output.getPostId(), notNullValue());

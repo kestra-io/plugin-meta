@@ -26,14 +26,13 @@ public class MockInstagramApiServer {
     // Create media container (POST /{ig_id}/media)
     @Post("/{igId}/media")
     public HttpResponse<String> createMediaContainer(
-        @PathVariable String igId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
-        @Body String body) throws IOException {
+            @PathVariable String igId,
+            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+            @Body String body) {
         // Parse the body to check media_type and store it
+        String containerId = "17910412629238319"; // Container ID
         try {
             JsonNode bodyJson = objectMapper.readTree(body);
-            String containerId = "17910412629238319"; // Container ID from response file
-
             if (bodyJson.has("media_type")) {
                 String mediaType = bodyJson.get("media_type").asText();
                 containerMediaTypes.put(containerId, mediaType);
@@ -42,24 +41,17 @@ public class MockInstagramApiServer {
             // Ignore parsing errors, use default behavior
         }
 
-        String responseFile = "instagram-create-container.json";
-
-        return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+        return HttpResponse.ok("{\"id\": \"" + containerId + "\"}");
     }
 
     // Publish media (POST /{ig_id}/media_publish)
     @Post("/{igId}/media_publish")
     public HttpResponse<String> publishMedia(
-        @PathVariable String igId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
-        @Body String body) throws IOException {
+            @PathVariable String igId,
+            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+            @Body String body) {
         // Check if this was a video container by looking up the container ID
-        String responseFile = "instagram-publish-media.json"; // Default
+        String mediaId = "17954170374002653"; // Default media ID
 
         try {
             JsonNode bodyJson = objectMapper.readTree(body);
@@ -68,61 +60,56 @@ public class MockInstagramApiServer {
                 String mediaType = containerMediaTypes.get(containerId);
 
                 if (mediaType != null && (mediaType.equals("REELS") || mediaType.equals("VIDEO"))) {
-                    responseFile = "instagram-publish-video.json";
+                    mediaId = "18091026160853193"; // Video media ID
                 }
             }
         } catch (Exception e) {
-            // Ignore parsing errors, use default response
+            // Ignore parsing errors, use default media ID
         }
 
-        return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+        return HttpResponse.ok("{\"id\": \"" + mediaId + "\"}");
     }
 
     @Get("/{igId}/media")
     public HttpResponse<String> listMedia(
-        @PathVariable String igId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
-        @Nullable @QueryValue Integer limit) throws IOException {
+            @PathVariable String igId,
+            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+            @Nullable @QueryValue Integer limit) throws IOException {
         String responseFile = (limit != null && limit == 1)
-            ? "instagram-list-media-limited.json"
-            : "instagram-list-media.json";
+                ? "instagram-list-media-limited.json"
+                : "instagram-list-media.json";
 
         return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+                Objects.requireNonNull(
+                        MockInstagramApiServer.class.getClassLoader()
+                                .getResourceAsStream(
+                                        "responses/instagram/" + responseFile)),
+                StandardCharsets.UTF_8));
     }
 
     @Get("/{mediaId}/insights")
     public HttpResponse<String> getMediaInsights(
-        @PathVariable String mediaId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
-        @Nullable @QueryValue String metric) throws IOException {
+            @PathVariable String mediaId,
+            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+            @Nullable @QueryValue String metric) throws IOException {
         String responseFile = (metric != null && metric.contains(","))
-            ? "instagram-insights-multiple.json"
-            : "instagram-insights.json";
+                ? "instagram-insights-multiple.json"
+                : "instagram-insights.json";
 
         return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+                Objects.requireNonNull(
+                        MockInstagramApiServer.class.getClassLoader()
+                                .getResourceAsStream(
+                                        "responses/instagram/" + responseFile)),
+                StandardCharsets.UTF_8));
     }
 
     // Get container status (GET /{container_id}?fields=status_code)
     @Get("/{containerId}")
     public HttpResponse<String> getContainerStatus(
-        @PathVariable String containerId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
-        @Nullable @QueryValue String fields) throws IOException {
+            @PathVariable String containerId,
+            @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+            @Nullable @QueryValue String fields) throws IOException {
         // Always return FINISHED status to allow immediate publishing in tests
         return HttpResponse.ok("{\"status_code\":\"FINISHED\",\"id\":\"" + containerId + "\"}");
     }

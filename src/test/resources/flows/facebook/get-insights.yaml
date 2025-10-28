@@ -1,14 +1,13 @@
-id: facebook_get_post_insights_multiple_test
+id: facebook_get_insights_test
 namespace: io.kestra.tests
 
 tasks:
-  - id: get_insights_multiple
-    type: io.kestra.plugin.meta.facebook.GetPostInsights
+  - id: get_insights
+    type: io.kestra.plugin.meta.facebook.posts.GetInsights
     pageId: "123456789"
     accessToken: "test_access_token"
     postIds:
       - "123456789_987654321"
-      - "123456789_987654322"
     metrics:
       - POST_REACTIONS_LIKE_TOTAL
       - POST_REACTIONS_LOVE_TOTAL
