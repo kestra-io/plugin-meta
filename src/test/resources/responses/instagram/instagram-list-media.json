@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "id": "17954170374002653",
+      "media_type": "IMAGE",
+      "media_url": "https://example.com/image1.jpg",
+      "permalink": "https://www.instagram.com/p/example1/",
+      "timestamp": "2025-10-23T18:12:25+0000",
+      "caption": "Test image post"
+    },
+    {
+      "id": "18091026160853193",
+      "media_type": "VIDEO",
+      "media_url": "https://example.com/video1.mp4",
+      "permalink": "https://www.instagram.com/p/example2/",
+      "timestamp": "2025-10-23T17:10:15+0000",
+      "caption": "Test video post"
+    }
+  ]
+}

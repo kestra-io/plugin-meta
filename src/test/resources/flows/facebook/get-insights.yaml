@@ -1,0 +1,14 @@
+id: facebook_get_insights_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: get_insights
+    type: io.kestra.plugin.meta.facebook.posts.GetInsights
+    pageId: "123456789"
+    accessToken: "test_access_token"
+    postIds:
+      - "123456789_987654321"
+    metrics:
+      - POST_REACTIONS_LIKE_TOTAL
+      - POST_REACTIONS_LOVE_TOTAL
+    apiBaseUrl: "{{ inputs.url }}"

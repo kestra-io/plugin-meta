@@ -1,0 +1,13 @@
+id: facebook_delete_posts_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: delete_posts
+    type: io.kestra.plugin.meta.facebook.posts.Delete
+    pageId: "123456789"
+    accessToken: "test_access_token"
+    postIds:
+      - "123456789_987654321"
+      - "123456789_987654322"
+      - "123456789_987654323"
+    apiBaseUrl: "{{ inputs.url }}"

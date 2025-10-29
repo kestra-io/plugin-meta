@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "name": "likes",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 5
+        }
+      ],
+      "title": "Likes",
+      "description": "The number of likes on your post.",
+      "id": "17954170374002653/insights/likes/lifetime"
+    },
+    {
+      "name": "comments",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 2
+        }
+      ],
+      "title": "Comments",
+      "description": "The number of comments on your post.",
+      "id": "17954170374002653/insights/comments/lifetime"
+    },
+    {
+      "name": "saves",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 3
+        }
+      ],
+      "title": "Saves",
+      "description": "The number of saves on your post.",
+      "id": "17954170374002653/insights/saves/lifetime"
+    },
+    {
+      "name": "reach",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 50
+        }
+      ],
+      "title": "Reach",
+      "description": "The number of unique accounts that have seen your post.",
+      "id": "17954170374002653/insights/reach/lifetime"
+    }
+  ]
+}

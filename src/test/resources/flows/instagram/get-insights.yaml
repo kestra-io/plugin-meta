@@ -1,0 +1,12 @@
+id: instagram_get_insights_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: get_insights
+    type: io.kestra.plugin.meta.instagram.media.GetInsights
+    igId: "17841467149546531"
+    accessToken: "test_access_token"
+    mediaId: "17954170374002653"
+    metrics:
+      - LIKES
+    host: "{{ inputs.url }}"

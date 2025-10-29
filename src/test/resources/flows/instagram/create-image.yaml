@@ -1,0 +1,10 @@
+id: instagram_create_image_test
+namespace: io.kestra.tests
+
+tasks:
+  - id: create_image
+    type: io.kestra.plugin.meta.instagram.media.CreateImage
+    igId: "17841467149546531"
+    accessToken: "test_access_token"
+    imageUrl: "https://example.com/test-image.jpg"
+    host: "{{ inputs.url }}"

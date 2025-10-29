@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "name": "post_reactions_like_total",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 150
+        }
+      ],
+      "title": "Lifetime Post Total Reactions",
+      "description": "Lifetime: The total number of reactions to a post.",
+      "id": "123456789_987654321/insights/post_reactions_like_total/lifetime"
+    },
+    {
+      "name": "post_impressions",
+      "period": "lifetime",
+      "values": [
+        {
+          "value": 5000
+        }
+      ],
+      "title": "Lifetime Post Total Impressions",
+      "description": "The number of times your Page's post entered a person's screen.",
+      "id": "123456789_987654321/insights/post_impressions/lifetime"
+    }
+  ],
+  "paging": {
+    "previous": "https://graph.facebook.com/v24.0/123456789_987654321/insights",
+    "next": "https://graph.facebook.com/v24.0/123456789_987654321/insights"
+  }
+}
