@@ -42,7 +42,7 @@ import java.util.Map;
 
                 tasks:
                   - id: schedule_post
-                    type: io.kestra.plugin.meta.facebook.posts.SchedulePost
+                    type: io.kestra.plugin.meta.facebook.posts.Schedule
                     pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     message: "This post is scheduled for tomorrow!"
@@ -53,7 +53,7 @@ import java.util.Map;
             title = "Schedule a post with Unix timestamp",
             code = """
                 - id: schedule_unix_post
-                  type: io.kestra.plugin.meta.facebook.posts.SchedulePost
+                  type: io.kestra.plugin.meta.facebook.posts.Schedule
                   pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
                   accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                   message: "Scheduled post with timestamp"
@@ -63,9 +63,9 @@ import java.util.Map;
         )
     }
 )
-public class SchedulePost extends AbstractFacebookTask {
+public class Schedule extends AbstractFacebookTask {
 
-    @Schema(title = "Post Message", description = "The text content of the post")
+    @Schema(title = "Message content to schedule in a post", description = "The text content of the post")
     @NotNull
     protected Property<String> message;
 

@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
-class SchedulePostTest extends AbstractFacebookTest {
+class ScheduleTest extends AbstractFacebookTest {
 
     @Inject
     private RunContextFactory runContextFactory;
@@ -38,7 +38,7 @@ class SchedulePostTest extends AbstractFacebookTest {
 
         long futureTimestamp = System.currentTimeMillis() / 1000 + 86400;
 
-        SchedulePost task = SchedulePost.builder()
+        Schedule task = Schedule.builder()
             .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
             .pageId(Property.ofValue("mock-page-id"))
             .accessToken(Property.ofValue("mock-access-token"))
@@ -46,7 +46,7 @@ class SchedulePostTest extends AbstractFacebookTest {
             .scheduledPublishTime(Property.ofValue(String.valueOf(futureTimestamp)))
             .build();
 
-        SchedulePost.Output output = task.run(runContext);
+        Schedule.Output output = task.run(runContext);
 
         assertThat(output, notNullValue());
         assertThat(output.getPostId(), notNullValue());
