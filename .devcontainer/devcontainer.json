@@ -1,10 +1,10 @@
 {
-  "name": "plugin-template",
+  "name": "plugin-meta",
   "build": {
     "context": ".",
     "dockerfile": "Dockerfile"
   },
-  "workspaceFolder": "/workspaces/plugin-template",
+  "workspaceFolder": "/workspaces/plugin-meta",
   "forwardPorts": [8080],
   "customizations": {
     "vscode": {
