@@ -5,6 +5,6 @@
                   "fetching detailed insights and analytics",
     categories = PluginSubGroup.PluginCategory.MESSAGING
 )
-package io.kestra.plugin.meta.facebook;
+package io.kestra.plugin.meta.facebook.posts;
 
 import io.kestra.core.models.annotations.PluginSubGroup;
