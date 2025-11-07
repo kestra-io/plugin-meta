@@ -12,6 +12,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.Await;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.VideoType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,15 +21,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.awaitility.core.ConditionTimeoutException;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import static org.awaitility.Awaitility.await;
+import java.util.concurrent.TimeoutException;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -148,15 +147,19 @@ public class CreateVideo extends AbstractInstagramTask {
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
 
         try {
-            await()
-                .atMost(Duration.ofMinutes(5))
-                .pollInterval(Duration.ofSeconds(10))
-                .pollDelay(Duration.ofSeconds(2))
-                .ignoreExceptions()
-                .until(checkContainerStatus(runContext, url, token, containerId));
-        } catch (ConditionTimeoutException e) {
-            throw new RuntimeException(
-                "Video processing timeout after 5 minutes for container: " + containerId, e);
+            Await.until(
+                () -> {
+                    try {
+                        return checkContainerStatus(runContext, url, token, containerId);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                },
+                Duration.ofSeconds(10),
+                Duration.ofMinutes(5)
+            );
+        } catch (TimeoutException e) {
+            throw new RuntimeException("Timed out after 5 minutes while waiting for video processing to complete for container: " + containerId, e);
         }
     }
 
