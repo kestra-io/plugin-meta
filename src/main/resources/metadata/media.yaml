@@ -1,0 +1,8 @@
+group: io.kestra.plugin.meta.instagram.media
+name: "media"
+title: "Meta plugin for Instagram Business account"
+description: "This plugin enables posting content, listing media, and fetching insights for Instagram Business accounts"
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
