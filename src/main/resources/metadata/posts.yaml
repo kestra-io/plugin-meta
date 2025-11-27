@@ -1,0 +1,8 @@
+group: io.kestra.plugin.meta.facebook.posts
+name: "posts"
+title: "Facebook"
+description: "This plugin enables comprehensive Facebook Page management including creating posts, scheduling content, deleting posts, listing page posts, and fetching detailed insights and analytics"
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
