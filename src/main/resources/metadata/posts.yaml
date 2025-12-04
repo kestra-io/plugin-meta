@@ -1,8 +1,8 @@
 group: io.kestra.plugin.meta.facebook.posts
 name: "posts"
 title: "Facebook"
-description: "This plugin enables comprehensive Facebook Page management including creating posts, scheduling content, deleting posts, listing page posts, and fetching detailed insights and analytics"
-body: ""
+description: "Tasks that create, schedule, list, and manage Facebook Page posts."
+body: "Provide the Page ID and long-lived access token to publish or delete posts, fetch existing content with insights, or schedule posts for later, using options such as `scheduledPublishTime`, `attachedMedia`, and `pageId` to control delivery."
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"
