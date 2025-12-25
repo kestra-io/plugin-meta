@@ -35,7 +35,7 @@ public class WhatsAppIncomingWebhookTest {
         RunContext runContext = runContextFactory.of(Map.of(
             "textBody", "WhatsApp test webhook notification. A message *with some bold text* and _some italicized text_.",
             "whatsAppIds", List.of("someId", "secondId")
-                                                           ));
+        ));
 
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
