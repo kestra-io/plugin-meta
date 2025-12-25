@@ -77,7 +77,8 @@ import java.net.URI;
                       }
                 """
         ),
-    }
+    },
+    aliases = "io.kestra.plugin.notifications.whatsapp.WhatsAppIncomingWebhook"
 )
 public class WhatsAppIncomingWebhook extends AbstractMetaConnection {
 

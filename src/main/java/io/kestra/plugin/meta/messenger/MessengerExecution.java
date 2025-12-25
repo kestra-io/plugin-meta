@@ -54,7 +54,8 @@ import java.util.Map;
                         prefix: true
                 """
         )
-    }
+    },
+    aliases = "io.kestra.plugin.notifications.messenger.MessengerExecution"
 )
 public class MessengerExecution extends MessengerTemplate implements ExecutionInterface {
 
