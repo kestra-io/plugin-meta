@@ -1,0 +1,8 @@
+group: io.kestra.plugin.meta
+name: "meta"
+title: "Meta"
+description: "Tasks that automate Meta (Facebook and Instagram) publishing with the Graph API."
+body: "Provide a Meta access token and the relevant Page or Instagram Business IDs to create, schedule, list, or delete posts and media while retrieving insights for reporting across Facebook Pages and Instagram accounts."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
