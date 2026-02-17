@@ -1,6 +1,6 @@
 group: io.kestra.plugin.meta.instagram.media
 name: "media"
-title: "Meta plugin for Instagram Business account"
+title: "Instagram"
 description: "Tasks that publish and inspect media for Instagram Business accounts."
 body: "Use an Instagram Business access token and user ID to upload images, carousels, or videos, list existing media, and pull engagement insights, ensuring required fields like `caption`, `mediaUrls`, and `igUserId` are set before posting."
 videos: []
