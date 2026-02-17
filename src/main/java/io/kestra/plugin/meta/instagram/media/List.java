@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @Schema(
     title = "List Instagram media items",
-    description = "Retrieve a list of the latest media items from an Instagram professional account"
+    description = "Retrieves recent media for a professional account. Defaults to 25 items, matching the Graph API default."
 )
 @Plugin(
     examples = {
@@ -69,11 +69,11 @@ public class List extends AbstractInstagramTask {
     // Default "limit" value is 25, as per the default in the Meta Graph API
     private static final int DEFAULT_MEDIA_LIMIT = 25;
 
-    @Schema(title = "Limit", description = "Maximum number of media items to retrieve")
+    @Schema(title = "Limit", description = "Maximum media items to fetch; defaults to 25.")
     @Builder.Default
     protected Property<Integer> limit = Property.ofValue(DEFAULT_MEDIA_LIMIT);
 
-    @Schema(title = "Fields", description = "List of fields to retrieve for each media item")
+    @Schema(title = "Fields", description = "Fields to return for each media item (Graph field names).")
     @Builder.Default
     protected Property<java.util.List<MediaField>> fields = Property.ofValue(java.util.List.of(
         MediaField.ID,
@@ -84,10 +84,7 @@ public class List extends AbstractInstagramTask {
         MediaField.TIMESTAMP,
         MediaField.CAPTION));
 
-    @Schema(title = "The way you want to store the data.", description = "FETCH_ONE output the first row, "
-        + "FETCH output all rows, "
-        + "STORE store all rows in a file, "
-        + "NONE do nothing.")
+    @Schema(title = "Fetch strategy", description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes rows to storage as Ion and returns the URI; NONE only counts items.")
     @Builder.Default
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
@@ -191,7 +188,7 @@ public class List extends AbstractInstagramTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "List of media items (when fetchType is FETCH)")
+        @Schema(title = "Media items (when fetchType is FETCH)")
         @JsonProperty("rows")
         private final java.util.List<Map<String, Object>> rows;
 
@@ -199,7 +196,7 @@ public class List extends AbstractInstagramTask {
         @JsonProperty("row")
         private final Map<String, Object> row;
 
-        @Schema(title = "URI of stored media items file (when fetchType is STORE)")
+        @Schema(title = "Stored media URI (when fetchType is STORE)")
         @JsonProperty("uri")
         private final URI uri;
 

@@ -19,8 +19,8 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Send a Messenger message with execution information.",
-    description = "Send execution details via Facebook Messenger including execution link, ID, namespace, flow name, start date, duration, and status."
+    title = "Send execution summary via Messenger",
+    description = "Sends a Facebook Messenger notification with the execution link, ID, namespace, flow name, start time, duration, and status. Defaults to the current execution; set executionId to {{ trigger.executionId }} in Flow triggers to reference the original run."
 )
 @Plugin(
     examples = {
@@ -60,19 +60,21 @@ import java.util.Map;
 public class MessengerExecution extends MessengerTemplate implements ExecutionInterface {
 
     @Schema(
-        title = "The execution ID to use",
-        description = "Default is the current execution, change it to {{ trigger.executionId }} if you use this task with a Flow trigger to use the original execution."
+        title = "Execution ID",
+        description = "Execution to describe in the notification. Defaults to the current run; set to {{ trigger.executionId }} inside Flow triggers to report on the triggering execution."
     )
     @Builder.Default
     private final Property<String> executionId = Property.ofExpression("{{ execution.id }}");
 
     @Schema(
-        title = "Custom fields to be added in the notification"
+        title = "Custom fields added to the template",
+        description = "Key/value pairs injected into the Pebble template as customFields."
     )
     private Property<Map<String, Object>> customFields;
 
     @Schema(
-        title = "Custom message to be added in the notification"
+        title = "Extra message body",
+        description = "Additional text appended after the generated execution summary."
     )
     private Property<String> customMessage;
 

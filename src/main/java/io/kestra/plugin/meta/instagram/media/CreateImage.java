@@ -28,8 +28,8 @@ import java.util.Map;
 @Getter
 @EqualsAndHashCode
 @Schema(
-    title = "Create and publish an image post to Instagram",
-    description = "Publish an image with caption to an Instagram professional account"
+    title = "Publish an Instagram image post",
+    description = "Uploads an image URL to the Instagram Graph API and publishes it with an optional caption. Requires a professional account token with content publish rights."
 )
 @Plugin(
     examples = {
@@ -53,11 +53,11 @@ import java.util.Map;
 )
 public class CreateImage extends AbstractInstagramTask {
 
-    @Schema(title = "Image URL", description = "Public URL of the image to upload (JPEG format only)")
+    @Schema(title = "Image URL", description = "Public HTTPS URL of the image to upload (JPEG only).")
     @NotNull
     protected Property<String> imageUrl;
 
-    @Schema(title = "Caption", description = "Caption text for the post")
+    @Schema(title = "Caption", description = "Optional caption text for the post.")
     protected Property<String> caption;
 
     @Override
@@ -159,11 +159,11 @@ public class CreateImage extends AbstractInstagramTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the published media")
+        @Schema(title = "ID of the published media")
         @JsonProperty("mediaId")
         private final String mediaId;
 
-        @Schema(title = "The ID of the media container")
+        @Schema(title = "ID of the media container")
         @JsonProperty("containerId")
         private final String containerId;
     }

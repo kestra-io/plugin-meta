@@ -18,19 +18,19 @@ import lombok.Builder;
 @ToString(exclude = { "accessToken" })
 public abstract class AbstractInstagramTask extends Task implements RunnableTask<io.kestra.core.models.tasks.Output> {
 
-    @Schema(title = "Instagram Account ID", description = "The ID of the Instagram professional account")
+    @Schema(title = "Instagram Account ID", description = "ID of the Instagram professional account to act on.")
     @NotNull
     protected Property<String> igId;
 
-    @Schema(title = "Access Token", description = "Instagram access token with appropriate permissions (instagram_basic, instagram_content_publish, etc.)")
+    @Schema(title = "Access Token", description = "Access token with required scopes (e.g., instagram_basic, instagram_content_publish).")
     @NotNull
     protected Property<String> accessToken;
 
-    @Schema(title = "API Version", description = "Instagram Graph API version to use")
+    @Schema(title = "API Version", description = "Instagram Graph API version to call. Defaults to v24.0.")
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("v24.0");
 
-    @Schema(title = "Host URL", description = "The host URL for the Instagram Graph API")
+    @Schema(title = "Host URL", description = "Base Graph API URL. Defaults to `https://graph.facebook.com`.")
     @Builder.Default
     protected Property<String> host = Property.ofValue("https://graph.facebook.com");
 

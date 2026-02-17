@@ -28,8 +28,8 @@ import java.util.Map;
 @Getter
 @EqualsAndHashCode
 @Schema(
-    title = "Create a post on a Facebook Page",
-    description = "Publish content to a Facebook Page including text, links, and media"
+    title = "Publish a Facebook Page post",
+    description = "Publishes a post to the Page feed with required message text and an optional link. Requires a Page access token with publish permissions."
 )
 @Plugin(
     examples = {
@@ -63,11 +63,11 @@ import java.util.Map;
 )
 public class Create extends AbstractFacebookTask {
 
-    @Schema(title = "Post Message", description = "The text content of the post")
+    @Schema(title = "Post message", description = "Text content to publish to the Page feed.")
     @NotNull
     protected Property<String> message;
 
-    @Schema(title = "Link URL", description = "Optional link to include in the post")
+    @Schema(title = "Link URL", description = "Optional HTTP/HTTPS link to attach to the post.")
     protected Property<String> link;
 
     @Override
@@ -126,7 +126,7 @@ public class Create extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the created post")
+        @Schema(title = "ID of the created post")
         @JsonProperty("postId")
         private final String postId;
     }

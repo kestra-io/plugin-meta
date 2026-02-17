@@ -31,8 +31,8 @@ import java.util.Map;
 @ToString
 @EqualsAndHashCode
 @Schema(
-    title = "List posts from a Facebook Page",
-    description = "Retrieve a list of recent posts from a Facebook Page"
+    title = "List Facebook Page posts",
+    description = "Retrieves Page feed entries via /feed with optional field selection. Limit defaults to 100 (API maximum)."
 )
 @Plugin(
     examples = {
@@ -69,17 +69,14 @@ public class List extends AbstractFacebookTask {
     // The maximum number of posts that can be fetched with the Meta API
     private static final int MAX_FETCH_LIMIT = 100;
 
-    @Schema(title = "Fields", description = "Comma-separated list of fields to retrieve for each post (e.g., id,message,created_time,permalink_url)")
+    @Schema(title = "Fields", description = "Comma-separated Graph fields to include for each post (e.g. id,message,created_time,permalink_url).")
     protected Property<String> fields;
 
-    @Schema(title = "Limit", description = "Maximum number of posts to retrieve", defaultValue = "100")
+    @Schema(title = "Limit", description = "Maximum posts to fetch; capped at 100 by the API.", defaultValue = "100")
     @Builder.Default
     protected Property<Integer> limit = Property.ofValue(MAX_FETCH_LIMIT);
 
-    @Schema(title = "The way you want to store the data.", description = "FETCH_ONE output the first row, "
-        + "FETCH output all rows, "
-        + "STORE store all rows in a file, "
-        + "NONE do nothing.")
+    @Schema(title = "Fetch strategy", description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes all rows to storage as Ion and returns the URI; NONE only counts items.")
     @Builder.Default
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
@@ -181,7 +178,7 @@ public class List extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "List of posts (when fetchType is FETCH)")
+        @Schema(title = "Posts list (when fetchType is FETCH)")
         @JsonProperty("rows")
         private final java.util.List<Map<String, Object>> rows;
 
@@ -189,7 +186,7 @@ public class List extends AbstractFacebookTask {
         @JsonProperty("row")
         private final Map<String, Object> row;
 
-        @Schema(title = "URI of stored posts file (when fetchType is STORE)")
+        @Schema(title = "Stored posts URI (when fetchType is STORE)")
         @JsonProperty("uri")
         private final URI uri;
 

@@ -27,32 +27,32 @@ import java.util.Map;
 @NoArgsConstructor
 public abstract class MessengerTemplate extends AbstractMetaConnection {
 
-    @Schema(title = "Facebook Page ID", description = "Facebook Page ID that will send the messages")
+    @Schema(title = "Facebook Page ID", description = "Page that sends the messages; must match the access token permissions.")
     @NotNull
     protected String pageId;
 
-    @Schema(title = "Page Access Token", description = "Facebook Page Access Token with pages_messaging permission")
+    @Schema(title = "Page Access Token", description = "Page access token with pages_messaging permission for the sender Page.")
     @NotNull
     protected String accessToken;
 
-    @Schema(title = "List of recipient PSIDs (Page-scoped IDs)", description = "At least one recipient PSID is required")
+    @Schema(title = "Recipient PSIDs", description = "Page-scoped recipient IDs; at least one is required or the task fails.")
     @NotNull
     protected Property<List<String>> recipientIds;
 
-    @Schema(title = "Messaging type", description = "Type of message (RESPONSE, UPDATE, MESSAGE_TAG)")
+    @Schema(title = "Messaging type", description = "Messaging type passed to the Graph API (RESPONSE, UPDATE, MESSAGE_TAG). Defaults to UPDATE.")
     @Builder.Default
     protected Property<MessagingType> messagingType = Property.ofValue(MessagingType.UPDATE);
 
     @Schema(title = "Template to use", hidden = true)
     protected Property<String> templateUri;
 
-    @Schema(title = "Map of variables to use for the message template")
+    @Schema(title = "Template variables", description = "Values injected into the Pebble template before sending.")
     protected Property<Map<String, Object>> templateRenderMap;
 
-    @Schema(title = "Message text body", description = "Direct message text (bypasses template)")
+    @Schema(title = "Message text body", description = "Direct message text; bypasses the template when provided.")
     protected Property<String> textBody;
 
-    @Schema(title = "Override URL for testing", description = "Optional URL to override the default Facebook Graph API endpoint (for testing purposes)")
+    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages.")
     protected Property<String> url;
 
     @Override

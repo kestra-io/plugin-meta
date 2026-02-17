@@ -29,8 +29,8 @@ import java.util.Map;
 @NoArgsConstructor
 @Getter
 @Schema(
-    title = "Create and publish a carousel post to Instagram",
-    description = "Publish a multi-image or multi-video carousel to an Instagram professional account"
+    title = "Publish an Instagram carousel",
+    description = "Creates and publishes a carousel with 2-10 media items (images or videos) to a professional account. Fails if the media count is outside the allowed range."
 )
 @Plugin(
     examples = {
@@ -61,11 +61,11 @@ public class CreateCarousel extends AbstractInstagramTask {
     private static final int MIN_CAROUSEL_ITEMS = 2;
     private static final int MAX_CAROUSEL_ITEMS = 10;
 
-    @Schema(title = "Media URLs", description = "List of public URLs for images and videos (2-10 items, JPEG for images)")
+    @Schema(title = "Media URLs", description = "Public URLs for 2-10 media items; JPEG for images, MP4/MOV for videos.")
     @NotNull
     protected Property<List<String>> mediaUrls;
 
-    @Schema(title = "Caption", description = "Caption text for the carousel post")
+    @Schema(title = "Caption", description = "Optional caption text for the carousel post.")
     protected Property<String> caption;
 
     @Override
@@ -222,15 +222,15 @@ public class CreateCarousel extends AbstractInstagramTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the published carousel media")
+        @Schema(title = "ID of the published carousel media")
         @JsonProperty("mediaId")
         private final String mediaId;
 
-        @Schema(title = "The ID of the carousel container")
+        @Schema(title = "ID of the carousel container")
         @JsonProperty("carouselContainerId")
         private final String carouselContainerId;
 
-        @Schema(title = "The IDs of the child media containers")
+        @Schema(title = "IDs of the child media containers")
         @JsonProperty("childContainerIds")
         private final List<String> childContainerIds;
 
