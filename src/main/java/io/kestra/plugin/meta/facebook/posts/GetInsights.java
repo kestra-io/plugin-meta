@@ -28,8 +28,8 @@ import java.util.*;
 @ToString
 @EqualsAndHashCode
 @Schema(
-    title = "Get insights for Facebook posts",
-    description = "Fetch insights and metrics like reach, impressions, and reactions for one or more Facebook posts"
+    title = "Collect Facebook post insights",
+    description = "Fetches Graph API insights (reach, impressions, reactions, etc.) for one or more posts. Defaults to lifetime reaction metrics; date_preset is ignored when since/until are provided."
 )
 @Plugin(
     examples = {
@@ -102,15 +102,15 @@ import java.util.*;
 )
 public class GetInsights extends AbstractFacebookTask {
 
-    @Schema(title = "Post IDs", description = "List of Facebook post IDs to get insights for (format: pageId_postId)")
+    @Schema(title = "Post IDs", description = "Post identifiers in pageId_postId format to retrieve insights for.")
     @NotNull
     private Property<java.util.List<String>> postIds;
 
-    @Schema(title = "Date Preset", description = "Preset a date range, like last_week, yesterday. If since or until are present, date_preset is ignored.")
+    @Schema(title = "Date preset", description = "Preset date range (e.g., last_week, yesterday). Default is TODAY; ignored when since or until are set.")
     @Builder.Default
     private Property<DatePreset> datePreset = Property.ofValue(DatePreset.TODAY);
 
-    @Schema(title = "Metrics", description = "List of specific metrics to retrieve. Default includes reaction metrics (like, love, wow, haha, sorry, anger). You can add more metrics like POST_IMPRESSIONS, POST_ENGAGED_USERS, etc.")
+    @Schema(title = "Metrics", description = "Metrics to request. Defaults to reaction totals; add metrics such as POST_IMPRESSIONS or POST_ENGAGED_USERS as needed.")
     @Builder.Default
     private Property<java.util.List<PostMetric>> metrics = Property.ofValue(Arrays.asList(
         PostMetric.POST_REACTIONS_LIKE_TOTAL,
@@ -120,15 +120,15 @@ public class GetInsights extends AbstractFacebookTask {
         PostMetric.POST_REACTIONS_SORRY_TOTAL,
         PostMetric.POST_REACTIONS_ANGER_TOTAL));
 
-    @Schema(title = "Period", description = "The aggregation period for insights")
+    @Schema(title = "Period", description = "Aggregation period for insights. Defaults to lifetime.")
     @Builder.Default
     private Property<Period> period = Property.ofValue(Period.LIFETIME);
 
-    @Schema(title = "Since", description = "Lower bound of the time range to consider (datetime). If provided, date_preset does not work.")
+    @Schema(title = "Since", description = "Lower bound (datetime string). Overrides date_preset when set. Defaults to today.")
     @Builder.Default
     private Property<String> since = Property.ofValue(LocalDate.now().toString());
 
-    @Schema(title = "Until", description = "Upper bound of the time range to consider (datetime). If provided, date_preset does not work.")
+    @Schema(title = "Until", description = "Upper bound (datetime string). Overrides date_preset when set. Defaults to today.")
     @Builder.Default
     private Property<String> until = Property.ofValue(LocalDate.now().toString());
 
@@ -246,15 +246,15 @@ public class GetInsights extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "List of post insights data")
+        @Schema(title = "Insights per post")
         @JsonProperty("posts")
         private final java.util.List<PostInsightsData> posts;
 
-        @Schema(title = "Total number of posts processed")
+        @Schema(title = "Total posts processed")
         @JsonProperty("totalPosts")
         private final Integer totalPosts;
 
-        @Schema(title = "Total number of insights retrieved")
+        @Schema(title = "Total insights retrieved")
         @JsonProperty("totalInsights")
         private final Integer totalInsights;
     }
@@ -262,11 +262,11 @@ public class GetInsights extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class PostInsightsData {
-        @Schema(title = "The post ID")
+        @Schema(title = "Post ID")
         @JsonProperty("postId")
         private final String postId;
 
-        @Schema(title = "Total number of insights for this post")
+        @Schema(title = "Insights count for this post")
         @JsonProperty("totalInsights")
         private final Integer totalInsights;
 
@@ -274,15 +274,15 @@ public class GetInsights extends AbstractFacebookTask {
         @JsonProperty("insights")
         private final java.util.List<Map<String, Object>> insights;
 
-        @Schema(title = "Summary of insights by metric name")
+        @Schema(title = "Summary by metric name")
         @JsonProperty("insightsSummary")
         private final Map<String, Object> insightsSummary;
 
-        @Schema(title = "The period used for insights")
+        @Schema(title = "Period used")
         @JsonProperty("period")
         private final String period;
 
-        @Schema(title = "Error message if insights retrieval failed")
+        @Schema(title = "Error if retrieval failed")
         @JsonProperty("error")
         private final String error;
     }

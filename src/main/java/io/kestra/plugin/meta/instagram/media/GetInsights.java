@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Getter
 @Schema(
-    title = "Get Instagram media insights",
-    description = "Fetch insights like reach, saves, likes, etc. for specific Instagram media"
+    title = "Collect Instagram media insights",
+    description = "Retrieves insight metrics such as reach, saves, likes, and comments for a specific media item using the Graph API."
 )
 @Plugin(
     examples = {
@@ -57,11 +57,11 @@ import java.util.stream.Collectors;
 )
 public class GetInsights extends AbstractInstagramTask {
 
-    @Schema(title = "Media ID", description = "The ID of the Instagram media to get insights for")
+    @Schema(title = "Media ID", description = "Instagram media ID to query insights for.")
     @NotNull
     protected Property<String> mediaId;
 
-    @Schema(title = "Metrics", description = "List of insight metrics to retrieve")
+    @Schema(title = "Metrics", description = "Insight metrics to fetch; defaults to likes, comments, saves, and reach.")
     @Builder.Default
     protected Property<List<InsightMetric>> metrics = Property.ofValue(
         java.util.List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH));
@@ -168,11 +168,11 @@ public class GetInsights extends AbstractInstagramTask {
         @JsonProperty("mediaId")
         private final String mediaId;
 
-        @Schema(title = "List of insights")
+        @Schema(title = "Insights")
         @JsonProperty("insights")
         private final List<Insight> insights;
 
-        @Schema(title = "Total number of insights")
+        @Schema(title = "Total insights")
         @JsonProperty("totalInsights")
         private final Integer totalInsights;
     }

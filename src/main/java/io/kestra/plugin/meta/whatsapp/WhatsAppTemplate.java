@@ -34,38 +34,45 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
     protected Property<String> templateUri;
 
     @Schema(
-        title = "Map of variables to use for the message template"
+        title = "Template variables",
+        description = "Values injected into the Pebble template before generating the payload."
     )
     protected Property<Map<String, Object>> templateRenderMap;
 
     @Schema(
-        title = "Sender profile name"
+        title = "Sender profile name",
+        description = "Profile name attached to contacts when whatsAppIds are provided."
     )
     protected Property<String> profileName;
 
     @Schema(
-        title = "The WhatsApp ID of the contact"
+        title = "Recipient WhatsApp IDs",
+        description = "List of wa_id values for contacts built into the payload."
     )
     protected Property<List<String>> whatsAppIds;
 
     @Schema(
-        title = "WhatsApp ID of the sender (Phone number)"
+        title = "WhatsApp ID of the sender (Phone number)",
+        description = "Sender wa_id (phone number) inserted into the message payload."
     )
     protected Property<String> from;
 
     @Schema(
-        title = "Message id"
+        title = "Message ID",
+        description = "Optional message identifier included in the payload."
     )
     protected Property<String> messageId;
 
     @Schema(
-        title = "Message"
+        title = "Message",
+        description = "Plain text body; overrides template text when provided."
     )
     protected Property<String> textBody;
 
 
     @Schema(
-        title = "WhatsApp recipient ID"
+        title = "WhatsApp recipient ID",
+        description = "Optional recipient_id field; use for replies or status updates."
     )
     protected Property<String> recipientId;
 

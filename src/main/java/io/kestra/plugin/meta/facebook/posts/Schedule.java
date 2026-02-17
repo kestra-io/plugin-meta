@@ -28,8 +28,8 @@ import java.util.Map;
 @Getter
 @EqualsAndHashCode
 @Schema(
-    title = "Schedule a post on a Facebook Page",
-    description = "Schedule content to be published at a future time on a Facebook Page"
+    title = "Schedule a Facebook Page post",
+    description = "Creates a Page feed post with a future publish time between 10 minutes and 30 days from now."
 )
 @Plugin(
     examples = {
@@ -65,14 +65,14 @@ import java.util.Map;
 )
 public class Schedule extends AbstractFacebookTask {
 
-    @Schema(title = "Message content to schedule in a post", description = "The text content of the post")
+    @Schema(title = "Post message", description = "Text content that will be published at the scheduled time.")
     @NotNull
     protected Property<String> message;
 
-    @Schema(title = "Link URL", description = "Optional link to include in the post")
+    @Schema(title = "Link URL", description = "Optional HTTP/HTTPS link to include with the post.")
     protected Property<String> link;
 
-    @Schema(title = "Scheduled Publish Time",description = "When to publish the post. Accepts Unix timestamp or ISO 8601 string (e.g., 2025-10-26T10:30:00Z). Must be between 10 minutes and 30 days from now.")
+    @Schema(title = "Scheduled publish time",description = "Publish time as Unix timestamp or ISO-8601 string (e.g., 2025-10-26T10:30:00Z); must be 10 minutes to 30 days in the future.")
     @NotNull
     protected Property<String> scheduledPublishTime;
 
@@ -131,7 +131,7 @@ public class Schedule extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the scheduled post")
+        @Schema(title = "ID of the scheduled post")
         @JsonProperty("postId")
         private final String postId;
 

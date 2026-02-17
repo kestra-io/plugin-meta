@@ -26,8 +26,8 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 @Schema(
-    title = "Delete a post from a Facebook Page",
-    description = "Delete a specific post from a Facebook Page using its post ID"
+    title = "Delete Facebook Page posts",
+    description = "Deletes one or more Page posts by ID (pageId_postId format). Continues through the list and reports successes and failures."
 )
 @Plugin(
     examples = {
@@ -64,7 +64,7 @@ import java.util.List;
 )
 public class Delete extends AbstractFacebookTask {
 
-    @Schema(title = "Post IDs", description = "List of post IDs to delete (format: pageId_postId)")
+    @Schema(title = "Post IDs", description = "Post identifiers in pageId_postId format to delete.")
     @NotNull
     protected Property<java.util.List<String>> postIds;
 
@@ -131,23 +131,23 @@ public class Delete extends AbstractFacebookTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "List of successfully deleted post IDs")
+        @Schema(title = "Deleted post IDs")
         @JsonProperty("deletedPostIds")
         private final java.util.List<String> deletedPostIds;
 
-        @Schema(title = "List of post IDs that failed to delete")
+        @Schema(title = "Failed post IDs")
         @JsonProperty("failedPostIds")
         private final java.util.List<String> failedPostIds;
 
-        @Schema(title = "Total number of posts deleted")
+        @Schema(title = "Total posts deleted")
         @JsonProperty("totalDeleted")
         private final Integer totalDeleted;
 
-        @Schema(title = "Total number of posts that failed to delete")
+        @Schema(title = "Total posts failed")
         @JsonProperty("totalFailed")
         private final Integer totalFailed;
 
-        @Schema(title = "Whether all posts were successfully deleted")
+        @Schema(title = "All deletions succeeded")
         @JsonProperty("allSuccess")
         private final Boolean allSuccess;
     }

@@ -20,19 +20,19 @@ import lombok.Builder;
 @ToString(exclude = { "accessToken" })
 public abstract class AbstractFacebookTask extends Task implements RunnableTask<io.kestra.core.models.tasks.Output> {
 
-    @Schema(title = "Facebook Page ID", description = "The ID of the Facebook page to perform operations on")
+    @Schema(title = "Facebook Page ID", description = "ID of the Page the task operates on; must match the access token scope.")
     @NotNull
     protected Property<String> pageId;
 
-    @Schema(title = "Access Token", description = "Facebook Page access token with appropriate permissions (pages_manage_posts, pages_manage_engagement, etc.)")
+    @Schema(title = "Access Token", description = "Page access token with permissions such as `pages_manage_posts` and `pages_read_engagement`.")
     @NotNull
     protected Property<String> accessToken;
 
-    @Schema(title = "API Version", description = "Facebook Graph API version to use")
+    @Schema(title = "API Version", description = "Facebook Graph API version to call. Defaults to v24.0.")
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("v24.0");
 
-    @Schema(title = "Base API URL", description = "The base URL for the Facebook Graph API")
+    @Schema(title = "Base API URL", description = "Base Graph API URL. Defaults to `https://graph.facebook.com`.")
     @Builder.Default
     protected Property<String> apiBaseUrl = Property.ofValue("https://graph.facebook.com");
 

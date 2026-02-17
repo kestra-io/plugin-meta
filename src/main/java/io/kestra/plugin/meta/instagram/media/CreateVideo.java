@@ -33,8 +33,8 @@ import java.util.concurrent.TimeoutException;
 @NoArgsConstructor
 @Getter
 @Schema(
-    title = "Create and publish a video post to Instagram",
-    description = "Publish a video with caption to an Instagram professional account"
+    title = "Publish an Instagram video post",
+    description = "Uploads a video URL and publishes it as a feed post or Reel. Waits up to 5 minutes for processing before publishing."
 )
 @Plugin(
     examples = {
@@ -59,14 +59,14 @@ import java.util.concurrent.TimeoutException;
 )
 public class CreateVideo extends AbstractInstagramTask {
 
-    @Schema(title = "Video URL", description = "Public URL of the video to upload")
+    @Schema(title = "Video URL", description = "Public HTTPS URL of the video to upload (e.g. MP4).")
     @NotNull
     protected Property<String> videoUrl;
 
-    @Schema(title = "Caption", description = "Caption text for the post")
+    @Schema(title = "Caption", description = "Optional caption text for the post.")
     protected Property<String> caption;
 
-    @Schema(title = "Media Type", description = "Type of video media to create")
+    @Schema(title = "Media type", description = "Video media type to create (VIDEO or REELS). Defaults to VIDEO.")
     @Builder.Default
     protected Property<VideoType> videoType = Property.ofValue(VideoType.VIDEO);
 
@@ -248,11 +248,11 @@ public class CreateVideo extends AbstractInstagramTask {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The ID of the published media")
+        @Schema(title = "ID of the published media")
         @JsonProperty("mediaId")
         private final String mediaId;
 
-        @Schema(title = "The ID of the media container")
+        @Schema(title = "ID of the media container")
         @JsonProperty("containerId")
         private final String containerId;
     }

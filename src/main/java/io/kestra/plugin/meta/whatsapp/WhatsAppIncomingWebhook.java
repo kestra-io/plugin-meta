@@ -26,8 +26,8 @@ import java.net.URI;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Send a WhatsApp message using an Incoming Webhook.",
-    description = "Add this task to a list of `errors` tasks to implement custom flow-level failure notifications. Check the <a href=\"https://developers.facebook.com/docs/whatsapp/on-premises/guides/webhooks\">WhatsApp documentation</a> for more details."
+    title = "Send WhatsApp via incoming webhook",
+    description = "Posts a JSON payload to a [WhatsApp on-prem incoming webhook](https://developers.facebook.com/docs/whatsapp/on-premises/guides/webhooks). Works well in flow-level `errors` tasks for failure notifications."
 )
 @Plugin(
     examples = {
@@ -83,14 +83,16 @@ import java.net.URI;
 public class WhatsAppIncomingWebhook extends AbstractMetaConnection {
 
     @Schema(
-        title = "Webhook URL which should be taken from whatsapp integrations tab"
+        title = "Incoming webhook URL",
+        description = "Webhook endpoint from the WhatsApp integration; supports expression rendering."
     )
     @PluginProperty(dynamic = true)
     @NotBlank
     protected String url;
 
     @Schema(
-        title = "WhatsApp message payload"
+        title = "WhatsApp message payload",
+        description = "Raw JSON payload sent to the webhook; include contacts/messages per WhatsApp on-prem format."
     )
     protected Property<String> payload;
 
