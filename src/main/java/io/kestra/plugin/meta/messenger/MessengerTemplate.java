@@ -1,5 +1,13 @@
 package io.kestra.plugin.meta.messenger;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -8,20 +16,14 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.AbstractMetaConnection;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
-@ToString(exclude = {"accessToken"})
+@ToString(exclude = { "accessToken" })
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
@@ -68,8 +70,12 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
         }
 
         String apiUrl = rUrl
-                .orElseGet(() -> String.format("https://graph.facebook.com/v23.0/%s/messages?access_token=%s",
-                        rPageId, rAccessToken));
+            .orElseGet(
+                () -> String.format(
+                    "https://graph.facebook.com/v23.0/%s/messages?access_token=%s",
+                    rPageId, rAccessToken
+                )
+            );
 
         String messageText = getMessageText(runContext);
 
@@ -85,11 +91,11 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
                 runContext.logger().debug("Sending Messenger message to {}", recipientId);
 
                 HttpRequest request = createRequestBuilder(runContext)
-                        .addHeader("Content-Type", "application/json")
-                        .uri(URI.create(apiUrl))
-                        .method("POST")
-                        .body(HttpRequest.StringRequestBody.builder().content(payload).build())
-                        .build();
+                    .addHeader("Content-Type", "application/json")
+                    .uri(URI.create(apiUrl))
+                    .method("POST")
+                    .body(HttpRequest.StringRequestBody.builder().content(payload).build())
+                    .build();
 
                 HttpResponse<String> response = client.request(request, String.class);
 
@@ -98,8 +104,10 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
                 if (response.getStatus().getCode() == 200) {
                     runContext.logger().info("Messenger message sent successfully to {}", recipientId);
                 } else {
-                    runContext.logger().error("Failed to send Messenger message to {}: {}", recipientId,
-                            response.getBody());
+                    runContext.logger().error(
+                        "Failed to send Messenger message to {}: {}", recipientId,
+                        response.getBody()
+                    );
                 }
             }
         }
@@ -108,24 +116,25 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     }
 
     private String getMessageText(RunContext runContext) throws Exception {
-    final var rTextBody = runContext.render(this.textBody).as(String.class);
-    final var rTemplateUri = runContext.render(this.templateUri).as(String.class);
+        final var rTextBody = runContext.render(this.textBody).as(String.class);
+        final var rTemplateUri = runContext.render(this.templateUri).as(String.class);
 
-    if (rTemplateUri.isPresent()) {
-        var resourceStream = this.getClass().getClassLoader().getResourceAsStream(rTemplateUri.get());
-        if (resourceStream == null) {
-            throw new IllegalArgumentException("Template resource not found: " + rTemplateUri.get());
-        }
-        String template = IOUtils.toString(
+        if (rTemplateUri.isPresent()) {
+            var resourceStream = this.getClass().getClassLoader().getResourceAsStream(rTemplateUri.get());
+            if (resourceStream == null) {
+                throw new IllegalArgumentException("Template resource not found: " + rTemplateUri.get());
+            }
+            String template = IOUtils.toString(
                 resourceStream,
-                StandardCharsets.UTF_8);
+                StandardCharsets.UTF_8
+            );
 
-        Map<String, Object> templateVars = templateRenderMap != null
+            Map<String, Object> templateVars = templateRenderMap != null
                 ? runContext.render(templateRenderMap).asMap(String.class, Object.class)
                 : Map.of();
 
-        return runContext.render(template, templateVars);
-    }
+            return runContext.render(template, templateVars);
+        }
 
         return rTextBody.orElse("");
 

@@ -1,5 +1,9 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -9,9 +13,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTest;
 import io.kestra.plugin.meta.instagram.enums.MediaField;
+
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -44,12 +47,17 @@ class ListTest extends AbstractInstagramTest {
             .host(Property.ofValue(embeddedServer.getURL().toString()))
             .igId(Property.ofValue("mock-ig-id"))
             .accessToken(Property.ofValue("mock-access-token"))
-            .fields(Property.ofValue(java.util.List.of(
-                MediaField.ID,
-                MediaField.CAPTION,
-                MediaField.MEDIA_TYPE,
-                MediaField.TIMESTAMP,
-                MediaField.PERMALINK)))
+            .fields(
+                Property.ofValue(
+                    java.util.List.of(
+                        MediaField.ID,
+                        MediaField.CAPTION,
+                        MediaField.MEDIA_TYPE,
+                        MediaField.TIMESTAMP,
+                        MediaField.PERMALINK
+                    )
+                )
+            )
             .limit(Property.ofValue(10))
             .build();
 

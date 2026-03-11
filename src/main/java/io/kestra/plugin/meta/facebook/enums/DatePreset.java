@@ -21,5 +21,3 @@ public enum DatePreset {
     THIS_WEEK_SUN_TODAY,
     THIS_YEAR
 }
-
-

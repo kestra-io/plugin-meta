@@ -1,7 +1,12 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.*;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -14,14 +19,12 @@ import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.kestra.plugin.meta.facebook.enums.DatePreset;
 import io.kestra.plugin.meta.facebook.enums.Period;
 import io.kestra.plugin.meta.facebook.enums.PostMetric;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.net.URI;
-import java.time.LocalDate;
-import java.util.*;
 @SuperBuilder
 @NoArgsConstructor
 @Getter
@@ -112,13 +115,16 @@ public class GetInsights extends AbstractFacebookTask {
 
     @Schema(title = "Metrics", description = "Metrics to request. Defaults to reaction totals; add metrics such as POST_IMPRESSIONS or POST_ENGAGED_USERS as needed.")
     @Builder.Default
-    private Property<java.util.List<PostMetric>> metrics = Property.ofValue(Arrays.asList(
-        PostMetric.POST_REACTIONS_LIKE_TOTAL,
-        PostMetric.POST_REACTIONS_LOVE_TOTAL,
-        PostMetric.POST_REACTIONS_WOW_TOTAL,
-        PostMetric.POST_REACTIONS_HAHA_TOTAL,
-        PostMetric.POST_REACTIONS_SORRY_TOTAL,
-        PostMetric.POST_REACTIONS_ANGER_TOTAL));
+    private Property<java.util.List<PostMetric>> metrics = Property.ofValue(
+        Arrays.asList(
+            PostMetric.POST_REACTIONS_LIKE_TOTAL,
+            PostMetric.POST_REACTIONS_LOVE_TOTAL,
+            PostMetric.POST_REACTIONS_WOW_TOTAL,
+            PostMetric.POST_REACTIONS_HAHA_TOTAL,
+            PostMetric.POST_REACTIONS_SORRY_TOTAL,
+            PostMetric.POST_REACTIONS_ANGER_TOTAL
+        )
+    );
 
     @Schema(title = "Period", description = "Aggregation period for insights. Defaults to lifetime.")
     @Builder.Default
@@ -137,30 +143,35 @@ public class GetInsights extends AbstractFacebookTask {
         java.util.List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
         java.util.List<PostInsightsData> results = new ArrayList<>();
 
-
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             for (String postId : rPostIds) {
                 try {
                     PostInsightsData postData = getPostInsights(runContext, httpClient, postId);
                     results.add(postData);
                 } catch (Exception e) {
                     runContext.logger().error("Failed to retrieve insights for post ID: {}", postId, e);
-                    results.add(PostInsightsData.builder()
-                        .postId(postId)
-                        .totalInsights(0)
-                        .insights(new ArrayList<>())
-                        .error("Failed: " + e.getMessage())
-                        .build());
+                    results.add(
+                        PostInsightsData.builder()
+                            .postId(postId)
+                            .totalInsights(0)
+                            .insights(new ArrayList<>())
+                            .error("Failed: " + e.getMessage())
+                            .build()
+                    );
                 }
             }
         }
 
         int totalInsights = results.stream().mapToInt(PostInsightsData::getTotalInsights).sum();
 
-        runContext.logger().info("Successfully processed {} posts with {} total insights", results.size(),
-            totalInsights);
+        runContext.logger().info(
+            "Successfully processed {} posts with {} total insights", results.size(),
+            totalInsights
+        );
 
         return Output.builder()
             .posts(results)
@@ -207,7 +218,8 @@ public class GetInsights extends AbstractFacebookTask {
 
         if (response.getStatus().getCode() != 200) {
             throw new RuntimeException(
-                "Failed to get post insights: " + response.getStatus().getCode() + " - " + response.getBody());
+                "Failed to get post insights: " + response.getStatus().getCode() + " - " + response.getBody()
+            );
         }
 
         JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());

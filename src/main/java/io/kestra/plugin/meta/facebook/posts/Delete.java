@@ -1,7 +1,12 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -11,14 +16,11 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -76,9 +78,11 @@ public class Delete extends AbstractFacebookTask {
         java.util.List<String> deletedPostIds = new ArrayList<>();
         java.util.List<String> failedPostIds = new ArrayList<>();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
 
             for (String postId : rPostIds) {
                 try {
@@ -94,8 +98,10 @@ public class Delete extends AbstractFacebookTask {
                     HttpResponse<String> response = httpClient.request(request, String.class);
 
                     if (response.getStatus().getCode() < 200 || response.getStatus().getCode() >= 300) {
-                        runContext.logger().error("Failed to delete post {}: {} - {}", postId,
-                            response.getStatus().getCode(), response.getBody());
+                        runContext.logger().error(
+                            "Failed to delete post {}: {} - {}", postId,
+                            response.getStatus().getCode(), response.getBody()
+                        );
                         failedPostIds.add(postId);
                         continue;
                     }

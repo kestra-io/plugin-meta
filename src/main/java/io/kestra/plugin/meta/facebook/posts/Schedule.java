@@ -1,27 +1,29 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import lombok.Builder;
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -72,7 +74,7 @@ public class Schedule extends AbstractFacebookTask {
     @Schema(title = "Link URL", description = "Optional HTTP/HTTPS link to include with the post.")
     protected Property<String> link;
 
-    @Schema(title = "Scheduled publish time",description = "Publish time as Unix timestamp or ISO-8601 string (e.g., 2025-10-26T10:30:00Z); must be 10 minutes to 30 days in the future.")
+    @Schema(title = "Scheduled publish time", description = "Publish time as Unix timestamp or ISO-8601 string (e.g., 2025-10-26T10:30:00Z); must be 10 minutes to 30 days in the future.")
     @NotNull
     protected Property<String> scheduledPublishTime;
 
@@ -96,35 +98,42 @@ public class Schedule extends AbstractFacebookTask {
         String jsonBody = JacksonMapper.ofJson().writeValueAsString(postData);
 
         HttpRequest request = HttpRequest.builder()
-                .method("POST")
-                .uri(URI.create(url))
-                .body(HttpRequest.StringRequestBody.builder()
-                        .content(jsonBody)
-                        .contentType("application/json")
-                        .build())
-                .addHeader("Authorization", "Bearer " + rToken)
-                .addHeader("Content-Type", "application/json")
-                .build();
+            .method("POST")
+            .uri(URI.create(url))
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .contentType("application/json")
+                    .build()
+            )
+            .addHeader("Authorization", "Bearer " + rToken)
+            .addHeader("Content-Type", "application/json")
+            .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
+        try (
+            HttpClient httpClient = HttpClient.builder()
                 .runContext(runContext)
-                .build()) {
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
-                        "Failed to schedule post: " + response.getStatus().getCode() + " - " + response.getBody());
+                    "Failed to schedule post: " + response.getStatus().getCode() + " - " + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
             String postId = responseJson.get("id").asText();
 
-            runContext.logger().info("Successfully scheduled Facebook post with ID: {} for time: {}", postId,
-                    rScheduleTime);
+            runContext.logger().info(
+                "Successfully scheduled Facebook post with ID: {} for time: {}", postId,
+                rScheduleTime
+            );
 
             return Output.builder()
-                    .postId(postId)
-                    .build();
+                .postId(postId)
+                .build();
         }
     }
 

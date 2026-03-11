@@ -1,7 +1,18 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -14,22 +25,13 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.MediaField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -75,16 +77,22 @@ public class List extends AbstractInstagramTask {
 
     @Schema(title = "Fields", description = "Fields to return for each media item (Graph field names).")
     @Builder.Default
-    protected Property<java.util.List<MediaField>> fields = Property.ofValue(java.util.List.of(
-        MediaField.ID,
-        MediaField.MEDIA_TYPE,
-        MediaField.MEDIA_URL,
-        MediaField.PERMALINK,
-        MediaField.THUMBNAIL_URL,
-        MediaField.TIMESTAMP,
-        MediaField.CAPTION));
+    protected Property<java.util.List<MediaField>> fields = Property.ofValue(
+        java.util.List.of(
+            MediaField.ID,
+            MediaField.MEDIA_TYPE,
+            MediaField.MEDIA_URL,
+            MediaField.PERMALINK,
+            MediaField.THUMBNAIL_URL,
+            MediaField.TIMESTAMP,
+            MediaField.CAPTION
+        )
+    );
 
-    @Schema(title = "Fetch strategy", description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes rows to storage as Ion and returns the URI; NONE only counts items.")
+    @Schema(
+        title = "Fetch strategy",
+        description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes rows to storage as Ion and returns the URI; NONE only counts items."
+    )
     @Builder.Default
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
@@ -109,15 +117,18 @@ public class List extends AbstractInstagramTask {
             .addHeader("Authorization", "Bearer " + rToken)
             .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
                     "Failed to list media: " + response.getStatus().getCode() + " - "
-                        + response.getBody());
+                        + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
@@ -137,8 +148,12 @@ public class List extends AbstractInstagramTask {
                 }
                 case STORE -> {
                     File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile),
-                        FileSerde.BUFFER_SIZE)) {
+                    try (
+                        OutputStream fileOutputStream = new BufferedOutputStream(
+                            new FileOutputStream(tempFile),
+                            FileSerde.BUFFER_SIZE
+                        )
+                    ) {
                         if (dataNode != null && dataNode.isArray()) {
                             for (JsonNode mediaNode : dataNode) {
                                 Map<String, Object> map = convertNodeToMap(mediaNode);

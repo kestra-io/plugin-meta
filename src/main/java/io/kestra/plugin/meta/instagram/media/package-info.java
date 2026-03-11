@@ -1,6 +1,6 @@
 @PluginSubGroup(
     title = "Instagram",
-    description = "This plugin enables posting content, listing media, and fetching insights for Instagram Business accounts",categories = {
+    description = "This plugin enables posting content, listing media, and fetching insights for Instagram Business accounts", categories = {
         PluginSubGroup.PluginCategory.BUSINESS
     }
 )

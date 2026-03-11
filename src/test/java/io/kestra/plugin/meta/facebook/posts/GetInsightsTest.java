@@ -1,5 +1,11 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -10,12 +16,8 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTest;
 import io.kestra.plugin.meta.facebook.enums.DatePreset;
 import io.kestra.plugin.meta.facebook.enums.PostMetric;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -52,10 +54,15 @@ class GetInsightsTest extends AbstractFacebookTest {
             .pageId(Property.ofValue("mock-page-id"))
             .accessToken(Property.ofValue("mock-access-token"))
             .postIds(Property.ofValue(List.of("123456789_987654321")))
-            .metrics(Property.ofValue(List.of(
-                PostMetric.POST_IMPRESSIONS,
-                PostMetric.POST_ENGAGED_USERS,
-                PostMetric.POST_CLICKS)))
+            .metrics(
+                Property.ofValue(
+                    List.of(
+                        PostMetric.POST_IMPRESSIONS,
+                        PostMetric.POST_ENGAGED_USERS,
+                        PostMetric.POST_CLICKS
+                    )
+                )
+            )
             .datePreset(Property.ofValue(DatePreset.LAST_7D))
             .build();
 

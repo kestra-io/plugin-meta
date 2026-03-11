@@ -1,7 +1,13 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -12,17 +18,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.InsightMetric;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -64,7 +66,8 @@ public class GetInsights extends AbstractInstagramTask {
     @Schema(title = "Metrics", description = "Insight metrics to fetch; defaults to likes, comments, saves, and reach.")
     @Builder.Default
     protected Property<List<InsightMetric>> metrics = Property.ofValue(
-        java.util.List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH));
+        java.util.List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH)
+    );
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -85,14 +88,17 @@ public class GetInsights extends AbstractInstagramTask {
             .addHeader("Authorization", "Bearer " + rToken)
             .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
-                    "Failed to get media insights: " + response.getStatus().getCode() + " - " + response.getBody());
+                    "Failed to get media insights: " + response.getStatus().getCode() + " - " + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());

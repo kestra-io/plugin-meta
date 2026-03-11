@@ -1,22 +1,24 @@
 package io.kestra.plugin.meta.whatsapp;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.apache.commons.io.IOUtils;
+
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.IOUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -69,7 +71,6 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
     )
     protected Property<String> textBody;
 
-
     @Schema(
         title = "WhatsApp recipient ID",
         description = "Optional recipient_id field; use for replies or status updates."
@@ -88,9 +89,8 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
                 StandardCharsets.UTF_8
             );
 
-            String render = runContext.render(template, templateRenderMap != null ?
-                runContext.render(templateRenderMap).asMap(String.class, Object.class) :
-                Map.of()
+            String render = runContext.render(
+                template, templateRenderMap != null ? runContext.render(templateRenderMap).asMap(String.class, Object.class) : Map.of()
             );
             map = (Map<String, Object>) JacksonMapper.ofJson().readValue(render, Object.class);
         }
@@ -99,9 +99,14 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
         final var renderedWhatsAppIds = runContext.render(this.whatsAppIds).asList(String.class);
         if (renderedProfileName.isPresent() && !renderedWhatsAppIds.isEmpty()) {
             List<Map<String, Object>> profiles = renderedWhatsAppIds.stream()
-                .map(throwFunction(WhatsAppId -> Map.of(
-                    "profile", Map.of("name", renderedProfileName.get()),
-                    "wa_id", WhatsAppId)))
+                .map(
+                    throwFunction(
+                        WhatsAppId -> Map.of(
+                            "profile", Map.of("name", renderedProfileName.get()),
+                            "wa_id", WhatsAppId
+                        )
+                    )
+                )
                 .toList();
 
             map.put("contacts", profiles);
@@ -113,11 +118,10 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
 
             runContext.render(this.messageId).as(String.class).ifPresent(id -> message.put("id", id));
 
-
             if (runContext.render(this.textBody).as(String.class).isPresent()) {
                 message.put("text", Map.of("body", runContext.render(this.textBody).as(String.class).get()));
             } else {
-                message.put("text", ((List<Map<String, Object>>)map.get("messages")).getFirst().getOrDefault("text", ""));
+                message.put("text", ((List<Map<String, Object>>) map.get("messages")).getFirst().getOrDefault("text", ""));
             }
 
             message.put("type", "text");

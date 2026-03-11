@@ -1,5 +1,10 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -9,11 +14,8 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTest;
 import io.kestra.plugin.meta.instagram.enums.InsightMetric;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.concurrent.TimeoutException;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -49,10 +51,15 @@ class GetInsightsTest extends AbstractInstagramTest {
             .igId(Property.ofValue("mock-ig-id"))
             .accessToken(Property.ofValue("mock-access-token"))
             .mediaId(Property.ofValue("17954170374002653"))
-            .metrics(Property.ofValue(List.of(
-                InsightMetric.IMPRESSIONS,
-                InsightMetric.REACH,
-                InsightMetric.SAVES)))
+            .metrics(
+                Property.ofValue(
+                    List.of(
+                        InsightMetric.IMPRESSIONS,
+                        InsightMetric.REACH,
+                        InsightMetric.SAVES
+                    )
+                )
+            )
             .build();
 
         GetInsights.Output output = task.run(runContext);

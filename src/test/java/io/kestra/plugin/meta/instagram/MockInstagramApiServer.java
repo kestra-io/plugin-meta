@@ -1,19 +1,21 @@
 package io.kestra.plugin.meta.instagram;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.*;
-import org.apache.commons.io.IOUtils;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.io.IOUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.*;
 
 @Controller("/v24.0")
 @Requires(property = "mock.instagram.enabled", value = "true", defaultValue = "true")
@@ -37,7 +39,8 @@ public class MockInstagramApiServer {
                 String mediaType = bodyJson.get("media_type").asText();
                 containerMediaTypes.put(containerId, mediaType);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         return HttpResponse.ok("{\"id\": \"" + containerId + "\"}");
     }
@@ -60,7 +63,8 @@ public class MockInstagramApiServer {
                     mediaId = "18091026160853193"; // Video media ID
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         return HttpResponse.ok("{\"id\": \"" + mediaId + "\"}");
     }
@@ -74,12 +78,17 @@ public class MockInstagramApiServer {
             ? "instagram-list-media-limited.json"
             : "instagram-list-media.json";
 
-        return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+        return HttpResponse.ok(
+            IOUtils.toString(
+                Objects.requireNonNull(
+                    MockInstagramApiServer.class.getClassLoader()
+                        .getResourceAsStream(
+                            "responses/instagram/" + responseFile
+                        )
+                ),
+                StandardCharsets.UTF_8
+            )
+        );
     }
 
     @Get("/{mediaId}/insights")
@@ -91,12 +100,17 @@ public class MockInstagramApiServer {
             ? "instagram-insights-multiple.json"
             : "instagram-insights.json";
 
-        return HttpResponse.ok(IOUtils.toString(
-            Objects.requireNonNull(
-                MockInstagramApiServer.class.getClassLoader()
-                    .getResourceAsStream(
-                        "responses/instagram/" + responseFile)),
-            StandardCharsets.UTF_8));
+        return HttpResponse.ok(
+            IOUtils.toString(
+                Objects.requireNonNull(
+                    MockInstagramApiServer.class.getClassLoader()
+                        .getResourceAsStream(
+                            "responses/instagram/" + responseFile
+                        )
+                ),
+                StandardCharsets.UTF_8
+            )
+        );
     }
 
     // Get container status (GET /{container_id}?fields=status_code)

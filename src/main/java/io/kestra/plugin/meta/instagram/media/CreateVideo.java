@@ -1,7 +1,15 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.net.URI;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -15,19 +23,13 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.VideoType;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeoutException;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -80,7 +82,6 @@ public class CreateVideo extends AbstractInstagramTask {
 
         runContext.logger().info("Creating Instagram {} post with video from: {}", rVideoType, rVideoUrl);
 
-
         String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rVideoType, rCaptionText);
         runContext.logger().info("Media container created with ID: {}", containerId);
 
@@ -99,7 +100,7 @@ public class CreateVideo extends AbstractInstagramTask {
     }
 
     private String createMediaContainer(RunContext runContext, String igId, String token, String videoUrl,
-                                        VideoType VideoType, String caption) throws Exception {
+        VideoType VideoType, String caption) throws Exception {
         String url = buildApiUrl(runContext, igId + "/media");
 
         Map<String, Object> containerData = new HashMap<>();
@@ -115,20 +116,24 @@ public class CreateVideo extends AbstractInstagramTask {
         HttpRequest request = HttpRequest.builder()
             .method("POST")
             .uri(URI.create(url))
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .contentType("application/json")
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .contentType("application/json")
+                    .build()
+            )
             .addHeader("Authorization", "Bearer " + token)
             .addHeader("Content-Type", "application/json")
             .build();
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .configuration(httpConfiguration)
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .configuration(httpConfiguration)
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
@@ -148,7 +153,8 @@ public class CreateVideo extends AbstractInstagramTask {
 
         try {
             Await.until(
-                () -> {
+                () ->
+                {
                     try {
                         return checkContainerStatus(runContext, url, token, containerId);
                     } catch (Exception e) {
@@ -164,8 +170,9 @@ public class CreateVideo extends AbstractInstagramTask {
     }
 
     private Callable<Boolean> checkContainerStatus(RunContext runContext, String url, String token,
-                                                   String containerId) {
-        return () -> {
+        String containerId) {
+        return () ->
+        {
             HttpRequest request = HttpRequest.builder()
                 .method("GET")
                 .uri(URI.create(url + "?fields=status_code"))
@@ -176,13 +183,16 @@ public class CreateVideo extends AbstractInstagramTask {
                 .timeout(
                     TimeoutConfiguration.builder()
                         .readIdleTimeout(Property.ofValue(Duration.ofSeconds(30)))
-                        .build())
+                        .build()
+                )
                 .build();
 
-            try (HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
-                .runContext(runContext)
-                .build()) {
+            try (
+                HttpClient httpClient = HttpClient.builder()
+                    .configuration(httpConfiguration)
+                    .runContext(runContext)
+                    .build()
+            ) {
                 HttpResponse<String> response = httpClient.request(request, String.class);
 
                 if (response.getStatus().getCode() == 200) {
@@ -219,25 +229,30 @@ public class CreateVideo extends AbstractInstagramTask {
         HttpRequest request = HttpRequest.builder()
             .method("POST")
             .uri(URI.create(url))
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .contentType("application/json")
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .contentType("application/json")
+                    .build()
+            )
             .addHeader("Authorization", "Bearer " + token)
             .addHeader("Content-Type", "application/json")
             .build();
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .configuration(httpConfiguration)
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .configuration(httpConfiguration)
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
-                    "Failed to publish media: " + response.getStatus().getCode() + " - " + response.getBody());
+                    "Failed to publish media: " + response.getStatus().getCode() + " - " + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());

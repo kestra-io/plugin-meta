@@ -1,7 +1,12 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -11,6 +16,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -18,10 +24,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -90,23 +92,27 @@ public class Create extends AbstractFacebookTask {
         HttpRequest request = HttpRequest.builder()
             .method("POST")
             .uri(URI.create(url))
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .build()
+            )
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer " + rToken)
             .build();
 
-
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             int statusCode = response.getStatus().getCode();
             if (statusCode < 200 || statusCode >= 300) {
                 throw new RuntimeException(
-                    "Failed to create post: " + statusCode + " - " + response.getBody());
+                    "Failed to create post: " + statusCode + " - " + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());

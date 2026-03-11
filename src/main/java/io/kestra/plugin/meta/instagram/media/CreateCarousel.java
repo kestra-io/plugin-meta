@@ -1,7 +1,14 @@
 package io.kestra.plugin.meta.instagram.media;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -12,18 +19,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.MediaType;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -57,7 +59,7 @@ import java.util.Map;
 )
 public class CreateCarousel extends AbstractInstagramTask {
 
-   // Minimum and Maximum number of media items allowed in an Instagram carousel (Meta API requirement).
+    // Minimum and Maximum number of media items allowed in an Instagram carousel (Meta API requirement).
     private static final int MIN_CAROUSEL_ITEMS = 2;
     private static final int MAX_CAROUSEL_ITEMS = 10;
 
@@ -86,8 +88,10 @@ public class CreateCarousel extends AbstractInstagramTask {
             childContainerIds.add(containerId);
         }
 
-        String carouselContainerId = createCarouselContainer(runContext, rIgId, rToken, childContainerIds,
-            rCaptionText);
+        String carouselContainerId = createCarouselContainer(
+            runContext, rIgId, rToken, childContainerIds,
+            rCaptionText
+        );
         String mediaId = publishMedia(runContext, rIgId, rToken, carouselContainerId);
 
         runContext.logger().info("Successfully created Instagram carousel post with ID: {}", mediaId);
@@ -118,24 +122,28 @@ public class CreateCarousel extends AbstractInstagramTask {
         HttpRequest request = HttpRequest.builder()
             .method("POST")
             .uri(URI.create(url))
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .build()
+            )
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer " + token)
             .build();
 
-
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
                     "Failed to create child media container: "
                         + response.getStatus().getCode() + " - "
-                        + response.getBody());
+                        + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
@@ -144,7 +152,7 @@ public class CreateCarousel extends AbstractInstagramTask {
     }
 
     private String createCarouselContainer(RunContext runContext, String igId, String token,
-                                           List<String> childContainerIds, String caption) throws Exception {
+        List<String> childContainerIds, String caption) throws Exception {
         String url = buildApiUrl(runContext, igId + "/media");
 
         Map<String, Object> containerData = new HashMap<>();
@@ -162,21 +170,26 @@ public class CreateCarousel extends AbstractInstagramTask {
             .uri(URI.create(url))
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer " + token)
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .build()
+            )
             .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
                     "Failed to create carousel container: " + response.getStatus().getCode()
                         + " - "
-                        + response.getBody());
+                        + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
@@ -198,20 +211,25 @@ public class CreateCarousel extends AbstractInstagramTask {
             .uri(URI.create(url))
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer " + token)
-            .body(HttpRequest.StringRequestBody.builder()
-                .content(jsonBody)
-                .build())
+            .body(
+                HttpRequest.StringRequestBody.builder()
+                    .content(jsonBody)
+                    .build()
+            )
             .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
                     "Failed to publish media: " + response.getStatus().getCode() + " - "
-                        + response.getBody());
+                        + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());

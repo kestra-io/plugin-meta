@@ -1,7 +1,16 @@
 package io.kestra.plugin.meta.facebook.posts;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -13,17 +22,10 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Map;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -76,7 +78,10 @@ public class List extends AbstractFacebookTask {
     @Builder.Default
     protected Property<Integer> limit = Property.ofValue(MAX_FETCH_LIMIT);
 
-    @Schema(title = "Fetch strategy", description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes all rows to storage as Ion and returns the URI; NONE only counts items.")
+    @Schema(
+        title = "Fetch strategy",
+        description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes all rows to storage as Ion and returns the URI; NONE only counts items."
+    )
     @Builder.Default
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
@@ -109,14 +114,17 @@ public class List extends AbstractFacebookTask {
             .addHeader("Authorization", "Bearer " + rToken)
             .build();
 
-        try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .build()) {
+        try (
+            HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .build()
+        ) {
             HttpResponse<String> response = httpClient.request(request, String.class);
 
             if (response.getStatus().getCode() != 200) {
                 throw new RuntimeException(
-                    "Failed to list posts: " + response.getStatus().getCode() + " - " + response.getBody());
+                    "Failed to list posts: " + response.getStatus().getCode() + " - " + response.getBody()
+                );
             }
 
             JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
@@ -136,8 +144,12 @@ public class List extends AbstractFacebookTask {
                 }
                 case STORE -> {
                     File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (OutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(tempFile),
-                        FileSerde.BUFFER_SIZE)) {
+                    try (
+                        OutputStream fileOutputStream = new BufferedOutputStream(
+                            new FileOutputStream(tempFile),
+                            FileSerde.BUFFER_SIZE
+                        )
+                    ) {
                         if (dataArray != null && dataArray.isArray()) {
                             for (JsonNode postNode : dataArray) {
                                 @SuppressWarnings("unchecked")
