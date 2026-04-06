@@ -13,6 +13,7 @@ import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -65,18 +66,21 @@ public class MessengerExecution extends MessengerTemplate implements ExecutionIn
         description = "Execution to describe in the notification. Defaults to the current run; set to {{ trigger.executionId }} inside Flow triggers to report on the triggering execution."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private final Property<String> executionId = Property.ofExpression("{{ execution.id }}");
 
     @Schema(
         title = "Custom fields added to the template",
         description = "Key/value pairs injected into the Pebble template as customFields."
     )
+    @PluginProperty(group = "destination")
     private Property<Map<String, Object>> customFields;
 
     @Schema(
         title = "Extra message body",
         description = "Additional text appended after the generated execution summary."
     )
+    @PluginProperty(group = "destination")
     private Property<String> customMessage;
 
     @Override

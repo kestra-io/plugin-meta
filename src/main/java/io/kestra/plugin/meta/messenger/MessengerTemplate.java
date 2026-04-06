@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString(exclude = { "accessToken" })
@@ -31,30 +32,38 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
 
     @Schema(title = "Facebook Page ID", description = "Page that sends the messages; must match the access token permissions.")
     @NotNull
+    @PluginProperty(group = "main")
     protected String pageId;
 
     @Schema(title = "Page Access Token", description = "Page access token with pages_messaging permission for the sender Page.")
     @NotNull
+    @PluginProperty(group = "main")
     protected String accessToken;
 
     @Schema(title = "Recipient PSIDs", description = "Page-scoped recipient IDs; at least one is required or the task fails.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<List<String>> recipientIds;
 
     @Schema(title = "Messaging type", description = "Messaging type passed to the Graph API (RESPONSE, UPDATE, MESSAGE_TAG). Defaults to UPDATE.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     protected Property<MessagingType> messagingType = Property.ofValue(MessagingType.UPDATE);
 
     @Schema(title = "Template to use", hidden = true)
+    @PluginProperty(group = "advanced")
     protected Property<String> templateUri;
 
     @Schema(title = "Template variables", description = "Values injected into the Pebble template before sending.")
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, Object>> templateRenderMap;
 
     @Schema(title = "Message text body", description = "Direct message text; bypasses the template when provided.")
+    @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
     @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages.")
+    @PluginProperty(group = "connection")
     protected Property<String> url;
 
     @Override

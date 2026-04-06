@@ -30,6 +30,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -63,13 +64,16 @@ public class CreateVideo extends AbstractInstagramTask {
 
     @Schema(title = "Video URL", description = "Public HTTPS URL of the video to upload (e.g. MP4).")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> videoUrl;
 
     @Schema(title = "Caption", description = "Optional caption text for the post.")
+    @PluginProperty(group = "advanced")
     protected Property<String> caption;
 
     @Schema(title = "Media type", description = "Video media type to create (VIDEO or REELS). Defaults to VIDEO.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     protected Property<VideoType> videoType = Property.ofValue(VideoType.VIDEO);
 
     @Override

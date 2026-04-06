@@ -25,6 +25,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -61,10 +62,12 @@ public class GetInsights extends AbstractInstagramTask {
 
     @Schema(title = "Media ID", description = "Instagram media ID to query insights for.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> mediaId;
 
     @Schema(title = "Metrics", description = "Insight metrics to fetch; defaults to likes, comments, saves, and reach.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     protected Property<List<InsightMetric>> metrics = Property.ofValue(
         java.util.List.of(InsightMetric.LIKES, InsightMetric.COMMENTS, InsightMetric.SAVES, InsightMetric.REACH)
     );

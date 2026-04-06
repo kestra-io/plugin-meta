@@ -21,6 +21,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -33,48 +34,56 @@ public abstract class WhatsAppTemplate extends WhatsAppIncomingWebhook {
         title = "Template to use",
         hidden = true
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> templateUri;
 
     @Schema(
         title = "Template variables",
         description = "Values injected into the Pebble template before generating the payload."
     )
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, Object>> templateRenderMap;
 
     @Schema(
         title = "Sender profile name",
         description = "Profile name attached to contacts when whatsAppIds are provided."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> profileName;
 
     @Schema(
         title = "Recipient WhatsApp IDs",
         description = "List of wa_id values for contacts built into the payload."
     )
+    @PluginProperty(group = "advanced")
     protected Property<List<String>> whatsAppIds;
 
     @Schema(
         title = "WhatsApp ID of the sender (Phone number)",
         description = "Sender wa_id (phone number) inserted into the message payload."
     )
+    @PluginProperty(group = "source")
     protected Property<String> from;
 
     @Schema(
         title = "Message ID",
         description = "Optional message identifier included in the payload."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> messageId;
 
     @Schema(
         title = "Message",
         description = "Plain text body; overrides template text when provided."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
     @Schema(
         title = "WhatsApp recipient ID",
         description = "Optional recipient_id field; use for replies or status updates."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> recipientId;
 
     @SuppressWarnings("unchecked")

@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -69,13 +70,16 @@ public class Schedule extends AbstractFacebookTask {
 
     @Schema(title = "Post message", description = "Text content that will be published at the scheduled time.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> message;
 
     @Schema(title = "Link URL", description = "Optional HTTP/HTTPS link to include with the post.")
+    @PluginProperty(group = "advanced")
     protected Property<String> link;
 
     @Schema(title = "Scheduled publish time", description = "Publish time as Unix timestamp or ISO-8601 string (e.g., 2025-10-26T10:30:00Z); must be 10 minutes to 30 days in the future.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> scheduledPublishTime;
 
     @Override

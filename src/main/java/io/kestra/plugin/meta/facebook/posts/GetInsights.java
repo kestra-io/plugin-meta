@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -111,6 +112,7 @@ public class GetInsights extends AbstractFacebookTask {
 
     @Schema(title = "Date preset", description = "Preset date range (e.g., last_week, yesterday). Default is TODAY; ignored when since or until are set.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<DatePreset> datePreset = Property.ofValue(DatePreset.TODAY);
 
     @Schema(title = "Metrics", description = "Metrics to request. Defaults to reaction totals; add metrics such as POST_IMPRESSIONS or POST_ENGAGED_USERS as needed.")
@@ -128,14 +130,17 @@ public class GetInsights extends AbstractFacebookTask {
 
     @Schema(title = "Period", description = "Aggregation period for insights. Defaults to lifetime.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<Period> period = Property.ofValue(Period.LIFETIME);
 
     @Schema(title = "Since", description = "Lower bound (datetime string). Overrides date_preset when set. Defaults to today.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<String> since = Property.ofValue(LocalDate.now().toString());
 
     @Schema(title = "Until", description = "Upper bound (datetime string). Overrides date_preset when set. Defaults to today.")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<String> until = Property.ofValue(LocalDate.now().toString());
 
     @Override
@@ -292,6 +297,7 @@ public class GetInsights extends AbstractFacebookTask {
 
         @Schema(title = "Period used")
         @JsonProperty("period")
+        @PluginProperty(group = "advanced")
         private final String period;
 
         @Schema(title = "Error if retrieval failed")
