@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -67,9 +68,11 @@ public class Create extends AbstractFacebookTask {
 
     @Schema(title = "Post message", description = "Text content to publish to the Page feed.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> message;
 
     @Schema(title = "Link URL", description = "Optional HTTP/HTTPS link to attach to the post.")
+    @PluginProperty(group = "advanced")
     protected Property<String> link;
 
     @Override

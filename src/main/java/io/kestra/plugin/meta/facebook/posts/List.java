@@ -26,6 +26,7 @@ import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -72,10 +73,12 @@ public class List extends AbstractFacebookTask {
     private static final int MAX_FETCH_LIMIT = 100;
 
     @Schema(title = "Fields", description = "Comma-separated Graph fields to include for each post (e.g. id,message,created_time,permalink_url).")
+    @PluginProperty(group = "advanced")
     protected Property<String> fields;
 
     @Schema(title = "Limit", description = "Maximum posts to fetch; capped at 100 by the API.", defaultValue = "100")
     @Builder.Default
+    @PluginProperty(group = "processing")
     protected Property<Integer> limit = Property.ofValue(MAX_FETCH_LIMIT);
 
     @Schema(
@@ -83,6 +86,7 @@ public class List extends AbstractFacebookTask {
         description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes all rows to storage as Ion and returns the URI; NONE only counts items."
     )
     @Builder.Default
+    @PluginProperty(group = "processing")
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
     @Override

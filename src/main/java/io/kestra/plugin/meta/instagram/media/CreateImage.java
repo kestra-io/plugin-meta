@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -57,9 +58,11 @@ public class CreateImage extends AbstractInstagramTask {
 
     @Schema(title = "Image URL", description = "Public HTTPS URL of the image to upload (JPEG only).")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> imageUrl;
 
     @Schema(title = "Caption", description = "Optional caption text for the post.")
+    @PluginProperty(group = "advanced")
     protected Property<String> caption;
 
     @Override

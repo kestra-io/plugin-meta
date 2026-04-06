@@ -26,6 +26,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -65,9 +66,11 @@ public class CreateCarousel extends AbstractInstagramTask {
 
     @Schema(title = "Media URLs", description = "Public URLs for 2-10 media items; JPEG for images, MP4/MOV for videos.")
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<List<String>> mediaUrls;
 
     @Schema(title = "Caption", description = "Optional caption text for the carousel post.")
+    @PluginProperty(group = "advanced")
     protected Property<String> caption;
 
     @Override

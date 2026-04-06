@@ -32,6 +32,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -73,6 +74,7 @@ public class List extends AbstractInstagramTask {
 
     @Schema(title = "Limit", description = "Maximum media items to fetch; defaults to 25.")
     @Builder.Default
+    @PluginProperty(group = "processing")
     protected Property<Integer> limit = Property.ofValue(DEFAULT_MEDIA_LIMIT);
 
     @Schema(title = "Fields", description = "Fields to return for each media item (Graph field names).")
@@ -94,6 +96,7 @@ public class List extends AbstractInstagramTask {
         description = "FETCH (default) returns all rows; FETCH_ONE returns the first; STORE writes rows to storage as Ion and returns the URI; NONE only counts items."
     )
     @Builder.Default
+    @PluginProperty(group = "processing")
     protected Property<FetchType> fetchType = Property.ofValue(FetchType.FETCH);
 
     @Override

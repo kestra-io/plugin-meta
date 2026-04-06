@@ -87,7 +87,7 @@ public class WhatsAppIncomingWebhook extends AbstractMetaConnection {
         title = "Incoming webhook URL",
         description = "Webhook endpoint from the WhatsApp integration; supports expression rendering."
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, group = "main")
     @NotBlank
     protected String url;
 
@@ -95,6 +95,7 @@ public class WhatsAppIncomingWebhook extends AbstractMetaConnection {
         title = "WhatsApp message payload",
         description = "Raw JSON payload sent to the webhook; include contacts/messages per WhatsApp on-prem format."
     )
+    @PluginProperty(group = "main")
     protected Property<String> payload;
 
     @Override
