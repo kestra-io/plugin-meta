@@ -2,7 +2,6 @@ package io.kestra.plugin.meta.facebook.posts;
 
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.exceptions.InternalException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -12,7 +11,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.TaskOutputService;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTest;
 
 import jakarta.inject.Inject;
@@ -26,17 +24,14 @@ class CreateTest extends AbstractFacebookTest {
     @Inject
     private RunContextFactory runContextFactory;
 
-    @Inject
-    private TaskOutputService taskOutputService;
-
     @Test
-    void createPostSuccess() throws TimeoutException, QueueException, InternalException {
+    void createPostSuccess() throws TimeoutException, QueueException {
         Execution execution = runFlow("facebook_create_post_test");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("postId"), notNullValue());
-        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("postId"), is("123456789_987654321"));
+        assertThat(outputsOf(execution).get("postId"), notNullValue());
+        assertThat(outputsOf(execution).get("postId"), is("123456789_987654321"));
     }
 
     @Test

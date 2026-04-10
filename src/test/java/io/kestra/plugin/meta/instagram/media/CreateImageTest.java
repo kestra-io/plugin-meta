@@ -30,8 +30,8 @@ class CreateImageTest extends AbstractInstagramTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), is("17954170374002653"));
+        assertThat(outputsOf(execution).get("mediaId"), notNullValue());
+        assertThat(outputsOf(execution).get("mediaId"), is("17954170374002653"));
     }
 
     @Test
