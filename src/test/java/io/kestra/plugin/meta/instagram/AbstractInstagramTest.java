@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
 import com.google.common.collect.ImmutableMap;
@@ -52,7 +52,7 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
 
     protected EmbeddedServer embeddedServer;
 
-    @BeforeEach
+    @BeforeAll
     void setUp() throws IOException, URISyntaxException {
         repositoryLoader.load(
             Objects.requireNonNull(
