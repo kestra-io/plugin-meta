@@ -2,11 +2,13 @@
 
 ## What
 
-description = 'Meta Plugin for Kestra Exposes 13 plugin components (tasks, triggers, and/or conditions).
+- Provides plugin components under `io.kestra.plugin.meta`.
+- Includes classes such as `WhatsAppIncomingWebhook`, `WhatsAppExecution`, `WhatsAppTemplate`, `MessagingType`.
 
 ## Why
 
-Enables Kestra workflows to interact with Meta, allowing orchestration of Meta-based operations as part of data pipelines and automation workflows.
+- This plugin integrates Kestra with Meta.
+- It provides tasks that automate Meta (Facebook and Instagram) publishing with the Graph API.
 
 ## How
 
@@ -46,24 +48,7 @@ plugin-meta/
 └── README.md
 ```
 
-### Important Commands
+## References
 
-```bash
-# Build the plugin
-./gradlew shadowJar
-
-# Run tests
-./gradlew test
-
-# Build without tests
-./gradlew shadowJar -x test
-```
-
-### Configuration
-
-All tasks and triggers accept standard Kestra plugin properties. Credentials should use
-`{{ secret('SECRET_NAME') }}` — never hardcode real values.
-
-## Agents
-
-**IMPORTANT:** This is a Kestra plugin repository (prefixed by `plugin-`, `storage-`, or `secret-`). You **MUST** delegate all coding tasks to the `kestra-plugin-developer` agent. Do NOT implement code changes directly — always use this agent.
+- https://kestra.io/docs/plugin-developer-guide
+- https://kestra.io/docs/plugin-developer-guide/contribution-guidelines
