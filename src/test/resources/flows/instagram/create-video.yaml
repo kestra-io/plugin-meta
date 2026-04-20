@@ -7,5 +7,5 @@ tasks:
     igId: "17841467149546531"
     accessToken: "test_access_token"
     videoUrl: "https://example.com/test-video.mp4"
-    mediaType: REELS
+    videoType: REELS
     host: "{{ inputs.url }}"
