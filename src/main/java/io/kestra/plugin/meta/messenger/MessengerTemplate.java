@@ -37,7 +37,7 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
 
     @Schema(title = "Page Access Token", description = "Page access token with pages_messaging permission for the sender Page.")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     protected String accessToken;
 
     @Schema(title = "Recipient PSIDs", description = "Page-scoped recipient IDs; at least one is required or the task fails.")

@@ -29,7 +29,7 @@ public abstract class AbstractFacebookTask extends Task implements RunnableTask<
 
     @Schema(title = "Access Token", description = "Page access token with permissions such as `pages_manage_posts` and `pages_read_engagement`.")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     protected Property<String> accessToken;
 
     @Schema(title = "API Version", description = "Facebook Graph API version to call. Defaults to v24.0.")
