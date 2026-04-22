@@ -27,7 +27,7 @@ public abstract class AbstractInstagramTask extends Task implements RunnableTask
 
     @Schema(title = "Access Token", description = "Access token with required scopes (e.g., instagram_basic, instagram_content_publish).")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     protected Property<String> accessToken;
 
     @Schema(title = "API Version", description = "Instagram Graph API version to call. Defaults to v24.0.")
