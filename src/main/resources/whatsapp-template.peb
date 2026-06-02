@@ -6,7 +6,7 @@
         "profile": {
           "name": "{{profileName}}"
         },
-        "wa_id": {{ contact | json }}
+        "wa_id": {{ contact | toJson }}
       }
     {% endfor %}
     {% endif %}
