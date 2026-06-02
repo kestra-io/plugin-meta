@@ -1,6 +1,6 @@
 group: io.kestra.plugin.meta.whatsapp
 name: "whatsapp"
-title: "Whatsapp"
+title: "WhatsApp"
 description: "Tasks that send WhatsApp messages (via Twilio API)."
 body: "Use Twilio WhatsApp credentials with from/to numbers and message content to push WhatsApp notifications from Kestra workflows."
 videos: []
