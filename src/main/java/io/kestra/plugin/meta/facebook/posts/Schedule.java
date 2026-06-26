@@ -54,14 +54,19 @@ import io.kestra.core.models.annotations.PluginProperty;
         ),
         @Example(
             title = "Schedule a post with Unix timestamp",
+            full = true,
             code = """
-                - id: schedule_unix_post
-                  type: io.kestra.plugin.meta.facebook.posts.Schedule
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  message: "Scheduled post with timestamp"
-                  scheduledPublishTime: "1735689600"
-                  link: "https://example.com"
+                id: schedule_facebook_post
+                namespace: company.team
+
+                tasks:
+                  - id: schedule_unix_post
+                    type: io.kestra.plugin.meta.facebook.posts.Schedule
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    message: "Scheduled post with timestamp"
+                    scheduledPublishTime: "1735689600"
+                    link: "https://example.com"
                 """
         )
     }

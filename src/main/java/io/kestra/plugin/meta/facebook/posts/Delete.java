@@ -51,15 +51,20 @@ import lombok.experimental.SuperBuilder;
         ),
         @Example(
             title = "Delete multiple Facebook posts",
+            full = true,
             code = """
-                - id: delete_multiple_posts
-                  type: io.kestra.plugin.meta.facebook.posts.Delete
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  postIds:
-                    - "123456789_987654321"
-                    - "123456789_987654322"
-                    - "123456789_987654323"
+                id: delete_facebook_posts
+                namespace: company.team
+
+                tasks:
+                  - id: delete_multiple_posts
+                    type: io.kestra.plugin.meta.facebook.posts.Delete
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    postIds:
+                      - "123456789_987654321"
+                      - "123456789_987654322"
+                      - "123456789_987654323"
                 """
         )
     }

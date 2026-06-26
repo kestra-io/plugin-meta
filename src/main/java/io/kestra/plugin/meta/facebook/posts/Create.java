@@ -53,13 +53,18 @@ import io.kestra.core.models.annotations.PluginProperty;
         ),
         @Example(
             title = "Create a post with link",
+            full = true,
             code = """
-                - id: create_post_with_link
-                  type: io.kestra.plugin.meta.facebook.posts.Create
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  message: "Check out this amazing automation platform!"
-                  link: "https://kestra.io"
+                id: create_facebook_post
+                namespace: company.team
+
+                tasks:
+                  - id: create_post_with_link
+                    type: io.kestra.plugin.meta.facebook.posts.Create
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    message: "Check out this amazing automation platform!"
+                    link: "https://kestra.io"
                 """
         )
     }
