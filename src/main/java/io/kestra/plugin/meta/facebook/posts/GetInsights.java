@@ -56,50 +56,65 @@ import io.kestra.core.models.annotations.PluginProperty;
         ),
         @Example(
             title = "Add custom metrics to default reactions",
+            full = true,
             code = """
-                - id: get_insights_with_custom_metrics
-                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  postIds:
-                    - "123456789_987654321"
-                  metrics:
-                    - POST_REACTIONS_LIKE_TOTAL
-                    - POST_REACTIONS_LOVE_TOTAL
-                    - POST_REACTIONS_WOW_TOTAL
-                    - POST_REACTIONS_HAHA_TOTAL
-                    - POST_REACTIONS_SORRY_TOTAL
-                    - POST_REACTIONS_ANGER_TOTAL
-                    - POST_IMPRESSIONS
-                    - POST_ENGAGED_USERS
-                  period: "lifetime"
+                id: facebook_post_insights
+                namespace: company.team
+
+                tasks:
+                  - id: get_insights_with_custom_metrics
+                    type: io.kestra.plugin.meta.facebook.posts.GetInsights
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    postIds:
+                      - "123456789_987654321"
+                    metrics:
+                      - POST_REACTIONS_LIKE_TOTAL
+                      - POST_REACTIONS_LOVE_TOTAL
+                      - POST_REACTIONS_WOW_TOTAL
+                      - POST_REACTIONS_HAHA_TOTAL
+                      - POST_REACTIONS_SORRY_TOTAL
+                      - POST_REACTIONS_ANGER_TOTAL
+                      - POST_IMPRESSIONS
+                      - POST_ENGAGED_USERS
+                    period: "lifetime"
                 """
         ),
         @Example(
             title = "Get insights with date preset",
+            full = true,
             code = """
-                - id: get_insights_last_7_days
-                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  postIds:
-                    - "123456789_987654321"
-                  datePreset: "last_7d"
-                  period: "day"
+                id: facebook_post_insights_preset
+                namespace: company.team
+
+                tasks:
+                  - id: get_insights_last_7_days
+                    type: io.kestra.plugin.meta.facebook.posts.GetInsights
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    postIds:
+                      - "123456789_987654321"
+                    datePreset: "last_7d"
+                    period: "day"
                 """
         ),
         @Example(
             title = "Get insights with custom date range",
+            full = true,
             code = """
-                - id: get_insights_custom_range
-                  type: io.kestra.plugin.meta.facebook.posts.GetInsights
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  postIds:
-                    - "123456789_987654321"
-                  since: "2025-10-01"
-                  until: "2025-10-15"
-                  period: "day"
+                id: facebook_post_insights_range
+                namespace: company.team
+
+                tasks:
+                  - id: get_insights_custom_range
+                    type: io.kestra.plugin.meta.facebook.posts.GetInsights
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    postIds:
+                      - "123456789_987654321"
+                    since: "2025-10-01"
+                    until: "2025-10-15"
+                    period: "day"
                 """
         )
     }

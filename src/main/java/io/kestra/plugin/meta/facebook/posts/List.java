@@ -56,13 +56,18 @@ import io.kestra.core.models.annotations.PluginProperty;
         ),
         @Example(
             title = "List posts with specific fields",
+            full = true,
             code = """
-                - id: list_detailed_posts
-                  type: io.kestra.plugin.meta.facebook.posts.List
-                  pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
-                  accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
-                  limit: 5
-                  fields: "id,message,created_time,permalink_url,reactions.summary(true)"
+                id: list_facebook_posts
+                namespace: company.team
+
+                tasks:
+                  - id: list_detailed_posts
+                    type: io.kestra.plugin.meta.facebook.posts.List
+                    pageId: "{{ secret('FACEBOOK_PAGE_ID') }}"
+                    accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
+                    limit: 5
+                    fields: "id,message,created_time,permalink_url,reactions.summary(true)"
                 """
         )
     }
