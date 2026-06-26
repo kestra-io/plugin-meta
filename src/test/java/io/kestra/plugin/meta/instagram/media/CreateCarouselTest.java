@@ -32,7 +32,7 @@ class CreateCarouselTest extends AbstractInstagramTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
+        assertThat(outputsOf(execution).get("mediaId"), notNullValue());
     }
 
     @Test

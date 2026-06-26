@@ -30,8 +30,8 @@ class ScheduleTest extends AbstractFacebookTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("postId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("postId"), is("123456789_987654321"));
+        assertThat(outputsOf(execution).get("postId"), notNullValue());
+        assertThat(outputsOf(execution).get("postId"), is("123456789_987654321"));
     }
 
     @Test
