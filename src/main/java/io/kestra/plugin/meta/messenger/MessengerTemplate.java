@@ -38,7 +38,7 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     @Schema(title = "Page Access Token", description = "Page access token with pages_messaging permission for the sender Page.")
     @NotNull
     @PluginProperty(group = "main", secret = true)
-    protected String accessToken;
+    protected Property<String> accessToken;
 
     @Schema(title = "Recipient PSIDs", description = "Page-scoped recipient IDs; at least one is required or the task fails.")
     @NotNull
@@ -69,7 +69,7 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         final var rRecipientIds = runContext.render(this.recipientIds).asList(String.class);
-        final var rAccessToken = runContext.render(this.accessToken);
+        final var rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         final var rPageId = runContext.render(this.pageId);
         final var rMessagingType = runContext.render(this.messagingType).as(MessagingType.class).orElse(MessagingType.UPDATE);
         final var rUrl = runContext.render(this.url).as(String.class);
@@ -81,8 +81,8 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
         String apiUrl = rUrl
             .orElseGet(
                 () -> String.format(
-                    "https://graph.facebook.com/v23.0/%s/messages?access_token=%s",
-                    rPageId, rAccessToken
+                    "https://graph.facebook.com/v23.0/%s/messages",
+                    rPageId
                 )
             );
 
@@ -101,6 +101,7 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
 
                 HttpRequest request = createRequestBuilder(runContext)
                     .addHeader("Content-Type", "application/json")
+                    .addHeader("Authorization", "Bearer " + rAccessToken)
                     .uri(URI.create(apiUrl))
                     .method("POST")
                     .body(HttpRequest.StringRequestBody.builder().content(payload).build())
