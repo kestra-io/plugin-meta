@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
 import com.google.common.collect.ImmutableMap;
@@ -19,6 +19,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunner;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.context.ApplicationContext;
@@ -50,9 +52,12 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;
 
+    @Inject
+    protected TaskOutputService taskOutputService;
+
     protected EmbeddedServer embeddedServer;
 
-    @BeforeEach
+    @BeforeAll
     void setUp() throws IOException, URISyntaxException {
         repositoryLoader.load(
             Objects.requireNonNull(
@@ -81,5 +86,13 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
             (f, e) -> ImmutableMap.of("url", embeddedServer.getURI().toString()),
             Duration.ofMinutes(10)
         );
+    }
+
+    protected Map<String, Object> outputsOf(Execution execution) {
+        try {
+            return taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
+        } catch (InternalException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -33,11 +33,10 @@ class DeleteTest extends AbstractFacebookTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        List<String> deletedPostIds = (List<String>) execution.getTaskRunList().getFirst().getOutputs()
-            .get("deletedPostIds");
+        List<String> deletedPostIds = (List<String>) outputsOf(execution).get("deletedPostIds");
         assertThat(deletedPostIds, hasSize(3));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("totalDeleted"), is(3));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("allSuccess"), is(true));
+        assertThat(outputsOf(execution).get("totalDeleted"), is(3));
+        assertThat(outputsOf(execution).get("allSuccess"), is(true));
     }
 
     @Test
