@@ -36,13 +36,12 @@ class GetInsightsTest extends AbstractFacebookTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> posts = (List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
-            .get("posts");
+        List<Map<String, Object>> posts = (List<Map<String, Object>>) outputsOf(execution).get("posts");
 
         assertThat(posts, notNullValue());
         assertThat(posts, hasSize(greaterThan(0)));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("totalPosts"), is(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("totalInsights"), is(2));
+        assertThat(outputsOf(execution).get("totalPosts"), is(1));
+        assertThat(outputsOf(execution).get("totalInsights"), is(2));
     }
 
     @Test

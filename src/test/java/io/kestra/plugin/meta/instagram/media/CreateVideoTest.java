@@ -31,8 +31,8 @@ class CreateVideoTest extends AbstractInstagramTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), is("18091026160853193"));
+        assertThat(outputsOf(execution).get("mediaId"), notNullValue());
+        assertThat(outputsOf(execution).get("mediaId"), is("18091026160853193"));
     }
 
     @Test

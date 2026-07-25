@@ -32,12 +32,12 @@ class GetInsightsTest extends AbstractInstagramTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), notNullValue());
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("mediaId"), is("17954170374002653"));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("totalInsights"), notNullValue());
+        assertThat(outputsOf(execution).get("mediaId"), notNullValue());
+        assertThat(outputsOf(execution).get("mediaId"), is("17954170374002653"));
+        assertThat(outputsOf(execution).get("totalInsights"), notNullValue());
 
         @SuppressWarnings("unchecked")
-        List<Object> insights = (List<Object>) execution.getTaskRunList().getFirst().getOutputs().get("insights");
+        List<Object> insights = (List<Object>) outputsOf(execution).get("insights");
         assertThat(insights, notNullValue());
         assertThat(insights.size(), greaterThan(0));
     }

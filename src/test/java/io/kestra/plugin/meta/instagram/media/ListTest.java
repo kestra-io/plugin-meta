@@ -33,10 +33,10 @@ class ListTest extends AbstractInstagramTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        java.util.List<Object> rows = (java.util.List<Object>) execution.getTaskRunList().getFirst().getOutputs().get("rows");
+        java.util.List<Object> rows = (java.util.List<Object>) outputsOf(execution).get("rows");
         assertThat(rows, notNullValue());
         assertThat(rows, hasSize(2));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("size"), is(2));
+        assertThat(outputsOf(execution).get("size"), is(2));
     }
 
     @Test

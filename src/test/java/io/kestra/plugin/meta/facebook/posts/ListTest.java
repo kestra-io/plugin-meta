@@ -33,11 +33,10 @@ class ListTest extends AbstractFacebookTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
 
         @SuppressWarnings("unchecked")
-        java.util.List<Map<String, Object>> rows = (java.util.List<Map<String, Object>>) execution.getTaskRunList().getFirst().getOutputs()
-            .get("rows");
+        java.util.List<Map<String, Object>> rows = (java.util.List<Map<String, Object>>) outputsOf(execution).get("rows");
         assertThat(rows, notNullValue());
         assertThat(rows, hasSize(2));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("size"), is(2));
+        assertThat(outputsOf(execution).get("size"), is(2));
     }
 
     @Test
