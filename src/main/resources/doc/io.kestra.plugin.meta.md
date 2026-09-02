@@ -4,7 +4,7 @@ Publish to Facebook and Instagram, send Messenger messages, and trigger WhatsApp
 
 ## Authentication
 
-**Facebook posts and Messenger**: set `pageId` (your Facebook Page ID) and `accessToken` (a page access token with the required permissions) on each task. Store `accessToken` in a [secret](https://kestra.io/docs/concepts/secret) and apply both globally with [plugin defaults](https://kestra.io/docs/workflow-components/plugin-defaults) when all tasks target the same page.
+**Facebook posts and Messenger**: set `pageId` (your Facebook Page ID) and `accessToken` (a page access token with the required permissions) on each task. Store `accessToken` in a [secret](https://kestra.io/docs/concepts/secret) and set both on each task.
 
 **Instagram media**: set `igId` (your Instagram professional account ID) and `accessToken`. The same token can cover both Facebook and Instagram if the account is connected to the same app.
 
