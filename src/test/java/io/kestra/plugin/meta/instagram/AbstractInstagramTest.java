@@ -63,6 +63,8 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
 
         embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
+
+        io.kestra.plugin.meta.facebook.PlainHttpRequestExecutor.install();
     }
 
     @AfterAll

@@ -1,20 +1,16 @@
 package io.kestra.plugin.meta.instagram.media;
 
-import java.net.URI;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.TimeoutConfiguration;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGMedia;
+import com.facebook.ads.sdk.IGUser;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -105,54 +101,24 @@ public class CreateVideo extends AbstractInstagramTask {
 
     private String createMediaContainer(RunContext runContext, String igId, String token, String videoUrl,
         VideoType VideoType, String caption) throws Exception {
-        String url = buildApiUrl(runContext, igId + "/media");
-
-        Map<String, Object> containerData = new HashMap<>();
-        containerData.put("video_url", videoUrl);
-        containerData.put("media_type", VideoType.name());
+        var request = new IGUser(igId, apiContext(runContext))
+            .createMedia()
+            .setVideoUrl(videoUrl)
+            .setMediaType(VideoType.name());
 
         if (caption != null) {
-            containerData.put("caption", caption);
+            request.setCaption(caption);
         }
 
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(containerData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .contentType("application/json")
-                    .build()
-            )
-            .addHeader("Authorization", "Bearer " + token)
-            .addHeader("Content-Type", "application/json")
-            .build();
-
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException("Failed to create container : " + response.getStatus().getCode());
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return request.execute().getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to create container : %s".formatted(e.getMessage()), e);
         }
     }
 
     private void waitForContainerReady(RunContext runContext, String token, String containerId)
         throws Exception {
-        String url = buildApiUrl(runContext, containerId);
-
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
 
         try {
@@ -160,7 +126,7 @@ public class CreateVideo extends AbstractInstagramTask {
                 () ->
                 {
                     try {
-                        return checkContainerStatus(runContext, url, token, containerId);
+                        return checkContainerStatus(runContext, containerId);
                     } catch (Exception e) {
                         return false;
                     }
@@ -173,94 +139,44 @@ public class CreateVideo extends AbstractInstagramTask {
         }
     }
 
-    private Callable<Boolean> checkContainerStatus(RunContext runContext, String url, String token,
-        String containerId) {
-        return () ->
+    private boolean checkContainerStatus(RunContext runContext, String containerId) throws Exception {
         {
-            HttpRequest request = HttpRequest.builder()
-                .method("GET")
-                .uri(URI.create(url + "?fields=status_code"))
-                .addHeader("Authorization", "Bearer " + token)
-                .build();
+            // status_code has no typed field on IGMedia, so it is asked for by name and read off the raw response
+            String rawResponse = new IGMedia(containerId, apiContext(runContext))
+                .get()
+                .requestField("status_code")
+                .execute()
+                .getRawResponse();
 
-            HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-                .timeout(
-                    TimeoutConfiguration.builder()
-                        .readIdleTimeout(Property.ofValue(Duration.ofSeconds(30)))
-                        .build()
-                )
-                .build();
+            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+            String statusCode = responseJson.has("status_code")
+                ? responseJson.get("status_code").asText()
+                : null;
 
-            try (
-                HttpClient httpClient = HttpClient.builder()
-                    .configuration(httpConfiguration)
-                    .runContext(runContext)
-                    .build()
-            ) {
-                HttpResponse<String> response = httpClient.request(request, String.class);
+            runContext.logger().debug("Container {} status: {}", containerId, statusCode);
 
-                if (response.getStatus().getCode() == 200) {
-                    JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-                    String statusCode = responseJson.has("status_code")
-                        ? responseJson.get("status_code").asText()
-                        : null;
-
-                    runContext.logger().debug("Container {} status: {}", containerId, statusCode);
-
-                    if ("FINISHED".equals(statusCode)) {
-                        runContext.logger().info("Video processing completed for container: {}", containerId);
-                        return true; // Processing complete
-                    } else if ("ERROR".equals(statusCode)) {
-                        throw new RuntimeException("Video processing failed for container: " + containerId);
-                    }
-                    // Status is IN_PROGRESS, continue waiting
-                    runContext.logger().debug("Video still processing, status: {}", statusCode);
-                }
-                return false; // Not ready yet
+            if ("FINISHED".equals(statusCode)) {
+                runContext.logger().info("Video processing completed for container: {}", containerId);
+                return true; // Processing complete
+            } else if ("ERROR".equals(statusCode)) {
+                throw new RuntimeException("Video processing failed for container: " + containerId);
             }
-        };
+            // Status is IN_PROGRESS, continue waiting
+            runContext.logger().debug("Video still processing, status: {}", statusCode);
+
+            return false; // Not ready yet
+        }
     }
 
     private String publishMedia(RunContext runContext, String igId, String token, String containerId) throws Exception {
-
-        String url = buildApiUrl(runContext, igId + "/media_publish");
-
-        Map<String, Object> publishData = new HashMap<>();
-        publishData.put("creation_id", containerId);
-
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(publishData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .contentType("application/json")
-                    .build()
-            )
-            .addHeader("Authorization", "Bearer " + token)
-            .addHeader("Content-Type", "application/json")
-            .build();
-
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to publish media: " + response.getStatus().getCode() + " - " + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return new IGUser(igId, apiContext(runContext))
+                .createMediaPublish()
+                .setCreationId(containerId)
+                .execute()
+                .getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to publish media: %s".formatted(e.getMessage()), e);
         }
     }
 

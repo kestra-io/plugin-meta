@@ -1,5 +1,7 @@
 package io.kestra.plugin.meta.instagram;
 
+import com.facebook.ads.sdk.APIContext;
+
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -44,5 +46,14 @@ public abstract class AbstractInstagramTask extends Task implements RunnableTask
         String rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v24.0");
         String rHost = runContext.render(this.host).as(String.class).orElse("https://graph.facebook.com");
         return String.format("%s/%s/%s", rHost, rVersion, endpoint);
+    }
+
+    /** The seven argument constructor is the only seam for the base URL, which host has always controlled. */
+    protected APIContext apiContext(RunContext runContext) throws Exception {
+        var rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+        var rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v24.0");
+        var rHost = runContext.render(this.host).as(String.class).orElse("https://graph.facebook.com");
+
+        return new APIContext(rHost, rHost, rVersion, rToken, null, null, false);
     }
 }
