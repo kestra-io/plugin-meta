@@ -44,12 +44,6 @@ public abstract class AbstractFacebookTask extends Task implements RunnableTask<
     @PluginProperty(group = "connection")
     protected Property<String> apiBaseUrl = Property.ofValue("https://graph.facebook.com");
 
-    protected String buildApiUrl(RunContext runContext, String endpoint) throws Exception {
-        String rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v24.0");
-        String rBaseUrl = runContext.render(this.apiBaseUrl).as(String.class).orElse("https://graph.facebook.com");
-        return String.format("%s/%s/%s", rBaseUrl, rVersion, endpoint);
-    }
-
     /** The seven argument constructor is the only seam for the base URL, which apiBaseUrl has always controlled. */
     protected APIContext apiContext(RunContext runContext) throws Exception {
         var rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
