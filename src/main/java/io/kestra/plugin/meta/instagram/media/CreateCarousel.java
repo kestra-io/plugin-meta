@@ -1,22 +1,17 @@
 package io.kestra.plugin.meta.instagram.media;
 
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGUser;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
 import io.kestra.plugin.meta.instagram.enums.MediaType;
 
@@ -108,135 +103,51 @@ public class CreateCarousel extends AbstractInstagramTask {
 
     private String createChildMediaContainer(RunContext runContext, String igId, String token, String mediaUrl)
         throws Exception {
-        String url = buildApiUrl(runContext, igId + "/media");
-
-        Map<String, Object> containerData = new HashMap<>();
-        containerData.put("is_carousel_item", true);
+        var request = new IGUser(igId, apiContext(runContext))
+            .createMedia()
+            .setIsCarouselItem(Boolean.TRUE);
 
         if (mediaUrl.toLowerCase().endsWith(".mp4") || mediaUrl.toLowerCase().endsWith(".mov")) {
-            containerData.put("video_url", mediaUrl);
-            containerData.put("media_type", "VIDEO");
+            request.setVideoUrl(mediaUrl).setMediaType("VIDEO");
         } else {
-            containerData.put("image_url", mediaUrl);
+            request.setImageUrl(mediaUrl);
         }
 
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(containerData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .build()
-            )
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + token)
-            .build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to create child media container: "
-                        + response.getStatus().getCode() + " - "
-                        + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return request.execute().getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to create child media container: %s".formatted(e.getMessage()), e);
         }
     }
 
     private String createCarouselContainer(RunContext runContext, String igId, String token,
         List<String> childContainerIds, String caption) throws Exception {
-        String url = buildApiUrl(runContext, igId + "/media");
-
-        Map<String, Object> containerData = new HashMap<>();
-        containerData.put("media_type", MediaType.CAROUSEL.name());
-        containerData.put("children", String.join(",", childContainerIds));
+        var request = new IGUser(igId, apiContext(runContext))
+            .createMedia()
+            .setMediaType(MediaType.CAROUSEL.name())
+            .setChildren(String.join(",", childContainerIds));
 
         if (caption != null) {
-            containerData.put("caption", caption);
+            request.setCaption(caption);
         }
 
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(containerData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + token)
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .build()
-            )
-            .build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to create carousel container: " + response.getStatus().getCode()
-                        + " - "
-                        + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return request.execute().getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to create carousel container: %s".formatted(e.getMessage()), e);
         }
     }
 
     private String publishMedia(RunContext runContext, String igId, String token, String containerId)
         throws Exception {
-        String url = buildApiUrl(runContext, igId + "/media_publish");
-
-        Map<String, Object> publishData = new HashMap<>();
-        publishData.put("creation_id", containerId);
-
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(publishData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + token)
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .build()
-            )
-            .build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to publish media: " + response.getStatus().getCode() + " - "
-                        + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return new IGUser(igId, apiContext(runContext))
+                .createMediaPublish()
+                .setCreationId(containerId)
+                .execute()
+                .getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to publish media: %s".formatted(e.getMessage()), e);
         }
     }
 

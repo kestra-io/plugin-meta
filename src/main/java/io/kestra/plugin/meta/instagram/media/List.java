@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,9 +14,9 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGUser;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -111,30 +112,21 @@ public class List extends AbstractInstagramTask {
             .map(field -> field.name().toLowerCase())
             .collect(Collectors.joining(","));
 
-        String url = buildApiUrl(runContext, rIgId + "/media");
+        String rawResponse;
+        try {
+            // the raw response keeps every field the caller asked for, the typed model would drop the unknown ones
+            rawResponse = new IGUser(rIgId, apiContext(runContext))
+                .getMedia()
+                .requestFields(Arrays.asList(fieldsParam.split(",")))
+                .setParam("limit", rLimit)
+                .execute()
+                .getRawResponse();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to list media: %s".formatted(e.getMessage()), e);
+        }
 
-        HttpRequest request = HttpRequest.builder()
-            .method("GET")
-            .uri(URI.create(url + "?fields=" + fieldsParam + "&limit=" + rLimit))
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + rToken)
-            .build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to list media: " + response.getStatus().getCode() + " - "
-                        + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
+        {
+            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
             JsonNode dataNode = responseJson.get("data");
 
             Output.OutputBuilder output = Output.builder();
