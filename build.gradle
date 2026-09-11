@@ -43,6 +43,9 @@ dependencies {
     annotationProcessor enforcedPlatform("io.kestra:platform:$kestraVersion")
     implementation enforcedPlatform("io.kestra:platform:$kestraVersion")
 
+    // Meta Business SDK
+    implementation "com.facebook.business.sdk:facebook-java-business-sdk:26.0.1"
+
     // lombok
     annotationProcessor "org.projectlombok:lombok"
     compileOnly "org.projectlombok:lombok"

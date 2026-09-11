@@ -63,6 +63,8 @@ public abstract class AbstractFacebookTest implements TestPropertyProvider {
 
         embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
+
+        PlainHttpRequestExecutor.install();
     }
 
     @AfterAll

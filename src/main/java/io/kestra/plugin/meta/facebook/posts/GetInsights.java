@@ -1,15 +1,14 @@
 package io.kestra.plugin.meta.facebook.posts;
 
-import java.net.URI;
 import java.time.LocalDate;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.PagePost;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -163,26 +162,19 @@ public class GetInsights extends AbstractFacebookTask {
         java.util.List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
         java.util.List<PostInsightsData> results = new ArrayList<>();
 
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            for (String postId : rPostIds) {
-                try {
-                    PostInsightsData postData = getPostInsights(runContext, httpClient, postId);
-                    results.add(postData);
-                } catch (Exception e) {
-                    runContext.logger().error("Failed to retrieve insights for post ID: {}", postId, e);
-                    results.add(
-                        PostInsightsData.builder()
-                            .postId(postId)
-                            .totalInsights(0)
-                            .insights(new ArrayList<>())
-                            .error("Failed: " + e.getMessage())
-                            .build()
-                    );
-                }
+        for (String postId : rPostIds) {
+            try {
+                results.add(getPostInsights(runContext, postId));
+            } catch (Exception e) {
+                runContext.logger().error("Failed to retrieve insights for post ID: {}", postId, e);
+                results.add(
+                    PostInsightsData.builder()
+                        .postId(postId)
+                        .totalInsights(0)
+                        .insights(new ArrayList<>())
+                        .error("Failed: " + e.getMessage())
+                        .build()
+                );
             }
         }
 
@@ -200,49 +192,38 @@ public class GetInsights extends AbstractFacebookTask {
             .build();
     }
 
-    private PostInsightsData getPostInsights(RunContext runContext, HttpClient httpClient, String postId)
-        throws Exception {
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+    private PostInsightsData getPostInsights(RunContext runContext, String postId) throws Exception {
         java.util.List<PostMetric> rMetrics = runContext.render(this.metrics).asList(PostMetric.class);
         Period rPeriod = runContext.render(this.period).as(Period.class).orElse(Period.LIFETIME);
         String rSince = runContext.render(this.since).as(String.class).orElse("");
         String rUntil = runContext.render(this.until).as(String.class).orElse("");
         DatePreset rDatePreset = runContext.render(this.datePreset).as(DatePreset.class).orElse(null);
 
-        StringBuilder urlBuilder = new StringBuilder();
-        urlBuilder.append(buildApiUrl(runContext, postId + "/insights"));
-        urlBuilder.append("?period=").append(rPeriod.name().toLowerCase());
-
-        String metricsStr = rMetrics.stream()
-            .map(metric -> metric.name().toLowerCase())
-            .collect(java.util.stream.Collectors.joining(","));
-        urlBuilder.append("&metric=").append(metricsStr);
+        var request = new PagePost(postId, apiContext(runContext))
+            .getInsights()
+            .setPeriod(rPeriod.name().toLowerCase())
+            .setMetric(
+                rMetrics.stream()
+                    .map(metric -> metric.name().toLowerCase())
+                    .collect(java.util.stream.Collectors.joining(","))
+            )
+            .setSince(rSince)
+            .setUntil(rUntil);
 
         if (rDatePreset != null && rSince.isEmpty() && rUntil.isEmpty()) {
-            urlBuilder.append("&date_preset=").append(rDatePreset.name().toLowerCase());
+            request.setDatePreset(rDatePreset.name().toLowerCase());
         }
 
-        urlBuilder.append("&since=").append(rSince);
-
-        urlBuilder.append("&until=").append(rUntil);
-
-        String fullUrl = urlBuilder.toString();
-
-        HttpRequest request = HttpRequest.builder()
-            .uri(URI.create(fullUrl))
-            .method("GET")
-            .addHeader("Authorization", "Bearer " + rToken)
-            .build();
-
-        HttpResponse<String> response = httpClient.request(request, String.class);
-
-        if (response.getStatus().getCode() != 200) {
-            throw new RuntimeException(
-                "Failed to get post insights: " + response.getStatus().getCode() + " - " + response.getBody()
-            );
+        String rawResponse;
+        try {
+            // the raw response is parsed as before, the typed model would drop metrics it does not know
+            rawResponse = request.execute().getRawResponse();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to get post insights: %s".formatted(e.getMessage()), e);
         }
 
-        JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+
         return parsePostInsights(postId, responseJson, rPeriod.name().toLowerCase());
     }
 

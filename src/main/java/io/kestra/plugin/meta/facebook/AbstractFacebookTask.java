@@ -1,5 +1,7 @@
 package io.kestra.plugin.meta.facebook;
 
+import com.facebook.ads.sdk.APIContext;
+
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -46,5 +48,14 @@ public abstract class AbstractFacebookTask extends Task implements RunnableTask<
         String rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v24.0");
         String rBaseUrl = runContext.render(this.apiBaseUrl).as(String.class).orElse("https://graph.facebook.com");
         return String.format("%s/%s/%s", rBaseUrl, rVersion, endpoint);
+    }
+
+    /** The seven argument constructor is the only seam for the base URL, which apiBaseUrl has always controlled. */
+    protected APIContext apiContext(RunContext runContext) throws Exception {
+        var rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+        var rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v24.0");
+        var rBaseUrl = runContext.render(this.apiBaseUrl).as(String.class).orElse("https://graph.facebook.com");
+
+        return new APIContext(rBaseUrl, rBaseUrl, rVersion, rToken, null, null, false);
     }
 }

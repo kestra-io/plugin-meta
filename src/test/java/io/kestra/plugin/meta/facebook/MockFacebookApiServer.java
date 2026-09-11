@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import jakarta.annotation.Nullable;
 
@@ -17,6 +18,7 @@ import jakarta.annotation.Nullable;
 @Requires(property = "mock.instagram.enabled", value = "false", defaultValue = "false")
 public class MockFacebookApiServer {
 
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED})
     @Post("/{pageId}/feed")
     public HttpResponse<String> createPost(@PathVariable String pageId,
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {

@@ -4,16 +4,17 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.util.ArrayList;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.Page;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -100,43 +101,26 @@ public class List extends AbstractFacebookTask {
         String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);
 
-        StringBuilder urlBuilder = new StringBuilder();
-        urlBuilder.append(buildApiUrl(runContext, rPageId + "/feed"));
-
-        boolean hasParams = false;
+        var request = new Page(rPageId, apiContext(runContext)).getFeed();
 
         String rFields = runContext.render(this.fields).as(String.class).orElse(null);
         if (rFields != null && !rFields.isEmpty()) {
-            urlBuilder.append("?fields=").append(rFields);
-            hasParams = true;
+            request.requestFields(Arrays.asList(rFields.split(",")));
         }
 
         Integer rLimit = runContext.render(this.limit).as(Integer.class).orElse(MAX_FETCH_LIMIT);
-        urlBuilder.append(hasParams ? "&" : "?").append("limit=").append(rLimit);
+        request.setLimit(rLimit.longValue());
 
-        String fullUrl = urlBuilder.toString();
+        String rawResponse;
+        try {
+            // the raw response keeps every field the caller asked for, the typed model would drop the unknown ones
+            rawResponse = request.execute().getRawResponse();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to list posts: %s".formatted(e.getMessage()), e);
+        }
 
-        HttpRequest request = HttpRequest.builder()
-            .uri(URI.create(fullUrl))
-            .method("GET")
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + rToken)
-            .build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to list posts: " + response.getStatus().getCode() + " - " + response.getBody()
-                );
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
+        {
+            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
             JsonNode dataArray = responseJson.get("data");
 
             Output.OutputBuilder output = Output.builder();
