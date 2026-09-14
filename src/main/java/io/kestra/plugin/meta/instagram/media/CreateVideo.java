@@ -7,12 +7,13 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-
+import com.facebook.ads.sdk.APIContext;
 import com.facebook.ads.sdk.APIException;
 import com.facebook.ads.sdk.IGMedia;
 import com.facebook.ads.sdk.IGUser;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -88,14 +89,16 @@ public class CreateVideo extends AbstractInstagramTask {
 
         runContext.logger().info("Creating Instagram {} post with video from: {}", rVideoType, rVideoUrl);
 
-        String containerId = createMediaContainer(runContext, rIgId, rVideoUrl, rVideoType, rCaptionText);
+        var context = apiContext(runContext);
+
+        String containerId = createMediaContainer(context, rIgId, rVideoUrl, rVideoType, rCaptionText);
         runContext.logger().info("Media container created with ID: {}", containerId);
 
         // Wait for video processing to complete
-        waitForContainerReady(runContext, containerId);
+        waitForContainerReady(runContext, context, containerId);
         runContext.logger().info("Video processing completed for container: {}", containerId);
 
-        String mediaId = publishMedia(runContext, rIgId, containerId);
+        String mediaId = publishMedia(context, rIgId, containerId);
 
         runContext.logger().info("Successfully created Instagram video post with ID: {}", mediaId);
 
@@ -105,9 +108,9 @@ public class CreateVideo extends AbstractInstagramTask {
             .build();
     }
 
-    private String createMediaContainer(RunContext runContext, String igId, String videoUrl,
-        VideoType VideoType, String caption) throws Exception {
-        var request = new IGUser(igId, apiContext(runContext))
+    private String createMediaContainer(APIContext context, String igId, String videoUrl,
+        VideoType VideoType, String caption) {
+        var request = new IGUser(igId, context)
             .createMedia()
             .setVideoUrl(videoUrl)
             .setMediaType(VideoType.name());
@@ -123,8 +126,7 @@ public class CreateVideo extends AbstractInstagramTask {
         }
     }
 
-    private void waitForContainerReady(RunContext runContext, String containerId)
-        throws Exception {
+    private void waitForContainerReady(RunContext runContext, APIContext context, String containerId) throws Exception {
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
 
         try {
@@ -132,7 +134,7 @@ public class CreateVideo extends AbstractInstagramTask {
                 () ->
                 {
                     try {
-                        return checkContainerStatus(runContext, containerId);
+                        return checkContainerStatus(runContext, context, containerId);
                     } catch (Exception e) {
                         return false;
                     }
@@ -145,60 +147,55 @@ public class CreateVideo extends AbstractInstagramTask {
         }
     }
 
-    private boolean checkContainerStatus(RunContext runContext, String containerId) throws Exception {
-        {
-            // status_code has no typed field on IGMedia, so it is asked for by name and read off the raw response
-            var context = apiContext(runContext);
-
-            // the SDK exposes no timeout seam and HttpsURLConnection defaults to infinite, and Await only checks its
-            // deadline between polls, so a hung call has to be bounded here or the 5 minute ceiling never fires
-            String rawResponse;
-            try {
-                rawResponse = CompletableFuture
-                    .supplyAsync(
-                        () ->
-                        {
-                            try {
-                                return new IGMedia(containerId, context)
-                                    .get()
-                                    .requestField("status_code")
-                                    .execute()
-                                    .getRawResponse();
-                            } catch (APIException e) {
-                                throw new CompletionException(e);
-                            }
+    private boolean checkContainerStatus(RunContext runContext, APIContext context, String containerId) throws Exception {
+        // the SDK exposes no timeout seam and HttpsURLConnection defaults to infinite, and Await only checks its
+        // deadline between polls, so a hung call has to be bounded here or the 5 minute ceiling never fires
+        String rawResponse;
+        try {
+            rawResponse = CompletableFuture
+                .supplyAsync(
+                    () ->
+                    {
+                        try {
+                            return new IGMedia(containerId, context)
+                                .get()
+                                .requestField("status_code")
+                                .execute()
+                                .getRawResponse();
+                        } catch (APIException e) {
+                            throw new CompletionException(e);
                         }
-                    )
-                    .get(POLL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
-            } catch (java.util.concurrent.TimeoutException e) {
-                runContext.logger().debug("Container {} status poll timed out after {}", containerId, POLL_TIMEOUT);
+                    }
+                )
+                .get(POLL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            runContext.logger().debug("Container {} status poll timed out after {}", containerId, POLL_TIMEOUT);
 
-                return false;
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
-            String statusCode = responseJson.has("status_code")
-                ? responseJson.get("status_code").asText()
-                : null;
-
-            runContext.logger().debug("Container {} status: {}", containerId, statusCode);
-
-            if ("FINISHED".equals(statusCode)) {
-                runContext.logger().info("Video processing completed for container: {}", containerId);
-                return true; // Processing complete
-            } else if ("ERROR".equals(statusCode)) {
-                throw new RuntimeException("Video processing failed for container: " + containerId);
-            }
-            // Status is IN_PROGRESS, continue waiting
-            runContext.logger().debug("Video still processing, status: {}", statusCode);
-
-            return false; // Not ready yet
+            return false;
         }
+
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        String statusCode = responseJson.has("status_code")
+            ? responseJson.get("status_code").asText()
+            : null;
+
+        runContext.logger().debug("Container {} status: {}", containerId, statusCode);
+
+        if ("FINISHED".equals(statusCode)) {
+            runContext.logger().info("Video processing completed for container: {}", containerId);
+            return true; // Processing complete
+        } else if ("ERROR".equals(statusCode)) {
+            throw new RuntimeException("Video processing failed for container: " + containerId);
+        }
+        // Status is IN_PROGRESS, continue waiting
+        runContext.logger().debug("Video still processing, status: {}", statusCode);
+
+    return false; // Not ready yet
     }
 
-    private String publishMedia(RunContext runContext, String igId, String containerId) throws Exception {
+    private String publishMedia(APIContext context, String igId, String containerId) {
         try {
-            return new IGUser(igId, apiContext(runContext))
+            return new IGUser(igId, context)
                 .createMediaPublish()
                 .setCreationId(containerId)
                 .execute()

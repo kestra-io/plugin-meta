@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGMedia;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.facebook.ads.sdk.APIException;
-import com.facebook.ads.sdk.IGMedia;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -92,47 +92,45 @@ public class GetInsights extends AbstractInstagramTask {
             throw new RuntimeException("Failed to get media insights: %s".formatted(e.getMessage()), e);
         }
 
-        {
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
-            JsonNode dataNode = responseJson.get("data");
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        JsonNode dataNode = responseJson.get("data");
 
-            List<Insight> insights = new ArrayList<>();
-            if (dataNode != null && dataNode.isArray()) {
-                for (JsonNode insightNode : dataNode) {
-                    String name = insightNode.has("name") ? insightNode.get("name").asText() : null;
-                    String period = insightNode.has("period") ? insightNode.get("period").asText() : null;
-                    String title = insightNode.has("title") ? insightNode.get("title").asText() : null;
-                    String description = insightNode.has("description") ? insightNode.get("description").asText()
-                        : null;
+        List<Insight> insights = new ArrayList<>();
+        if (dataNode != null && dataNode.isArray()) {
+            for (JsonNode insightNode : dataNode) {
+                String name = insightNode.has("name") ? insightNode.get("name").asText() : null;
+                String period = insightNode.has("period") ? insightNode.get("period").asText() : null;
+                String title = insightNode.has("title") ? insightNode.get("title").asText() : null;
+                String description = insightNode.has("description") ? insightNode.get("description").asText()
+                    : null;
 
-                    Integer value = null;
-                    JsonNode valuesNode = insightNode.get("values");
-                    if (valuesNode != null && valuesNode.isArray() && !valuesNode.isEmpty()) {
-                        JsonNode firstValue = valuesNode.get(0);
-                        if (firstValue.has("value")) {
-                            value = firstValue.get("value").asInt();
-                        }
+                Integer value = null;
+                JsonNode valuesNode = insightNode.get("values");
+                if (valuesNode != null && valuesNode.isArray() && !valuesNode.isEmpty()) {
+                    JsonNode firstValue = valuesNode.get(0);
+                    if (firstValue.has("value")) {
+                        value = firstValue.get("value").asInt();
                     }
-
-                    Insight insight = Insight.builder()
-                        .name(name)
-                        .period(period)
-                        .title(title)
-                        .description(description)
-                        .value(value)
-                        .build();
-                    insights.add(insight);
                 }
+
+                Insight insight = Insight.builder()
+                    .name(name)
+                    .period(period)
+                    .title(title)
+                    .description(description)
+                    .value(value)
+                    .build();
+                insights.add(insight);
             }
-
-            runContext.logger().info("Successfully retrieved insights for media ID: {}", rMediaId);
-
-            return Output.builder()
-                .mediaId(rMediaId)
-                .insights(insights)
-                .totalInsights(insights.size())
-                .build();
         }
+
+        runContext.logger().info("Successfully retrieved insights for media ID: {}", rMediaId);
+
+        return Output.builder()
+            .mediaId(rMediaId)
+            .insights(insights)
+            .totalInsights(insights.size())
+            .build();
     }
 
     @Builder

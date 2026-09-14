@@ -9,11 +9,11 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.Page;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.facebook.ads.sdk.APIException;
-import com.facebook.ads.sdk.Page;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -118,65 +118,63 @@ public class List extends AbstractFacebookTask {
             throw new RuntimeException("Failed to list posts: %s".formatted(e.getMessage()), e);
         }
 
-        {
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
-            JsonNode dataArray = responseJson.get("data");
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        JsonNode dataArray = responseJson.get("data");
 
-            Output.OutputBuilder output = Output.builder();
-            long size = 0L;
+        Output.OutputBuilder output = Output.builder();
+        long size = 0L;
 
-            switch (rFetchType) {
-                case FETCH_ONE -> {
-                    Map<String, Object> result = null;
-                    if (dataArray != null && dataArray.isArray() && !dataArray.isEmpty()) {
-                        result = JacksonMapper.ofJson().convertValue(dataArray.get(0), Map.class);
-                    }
-                    size = result == null ? 0L : 1L;
-                    output.row(result);
+        switch (rFetchType) {
+            case FETCH_ONE -> {
+                Map<String, Object> result = null;
+                if (dataArray != null && dataArray.isArray() && !dataArray.isEmpty()) {
+                    result = JacksonMapper.ofJson().convertValue(dataArray.get(0), Map.class);
                 }
-                case STORE -> {
-                    File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (
-                        OutputStream fileOutputStream = new BufferedOutputStream(
-                            new FileOutputStream(tempFile),
-                            FileSerde.BUFFER_SIZE
-                        )
-                    ) {
-                        if (dataArray != null && dataArray.isArray()) {
-                            for (JsonNode postNode : dataArray) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
-                                FileSerde.write(fileOutputStream, post);
-                                size++;
-                            }
-                        }
-                    }
-                    output.uri(runContext.storage().putFile(tempFile));
-                }
-                case FETCH -> {
-                    java.util.List<Map<String, Object>> posts = new ArrayList<>();
+                size = result == null ? 0L : 1L;
+                output.row(result);
+            }
+            case STORE -> {
+                File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
+                try (
+                    OutputStream fileOutputStream = new BufferedOutputStream(
+                        new FileOutputStream(tempFile),
+                        FileSerde.BUFFER_SIZE
+                    )
+                ) {
                     if (dataArray != null && dataArray.isArray()) {
                         for (JsonNode postNode : dataArray) {
                             @SuppressWarnings("unchecked")
                             Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
-                            posts.add(post);
+                            FileSerde.write(fileOutputStream, post);
                             size++;
                         }
                     }
-                    output.rows(posts);
                 }
-                case NONE -> {
-                    if (dataArray != null && dataArray.isArray()) {
-                        size = dataArray.size();
+                output.uri(runContext.storage().putFile(tempFile));
+            }
+            case FETCH -> {
+                java.util.List<Map<String, Object>> posts = new ArrayList<>();
+                if (dataArray != null && dataArray.isArray()) {
+                    for (JsonNode postNode : dataArray) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
+                        posts.add(post);
+                        size++;
                     }
                 }
+                output.rows(posts);
             }
-
-            output.size(size);
-            runContext.logger().info("Successfully retrieved {} Facebook posts", size);
-
-            return output.build();
+            case NONE -> {
+                if (dataArray != null && dataArray.isArray()) {
+                    size = dataArray.size();
+                }
+            }
         }
+
+        output.size(size);
+        runContext.logger().info("Successfully retrieved {} Facebook posts", size);
+
+        return output.build();
     }
 
     @Builder

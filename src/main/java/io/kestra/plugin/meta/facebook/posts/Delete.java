@@ -3,9 +3,9 @@ package io.kestra.plugin.meta.facebook.posts;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.facebook.ads.sdk.PagePost;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import com.facebook.ads.sdk.PagePost;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.models.annotations.Example;

@@ -3,11 +3,12 @@ package io.kestra.plugin.meta.facebook.posts;
 import java.time.LocalDate;
 import java.util.*;
 
+import com.facebook.ads.sdk.APIContext;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.PagePost;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.facebook.ads.sdk.APIException;
-import com.facebook.ads.sdk.PagePost;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -161,10 +162,11 @@ public class GetInsights extends AbstractFacebookTask {
     public Output run(RunContext runContext) throws Exception {
         java.util.List<String> rPostIds = runContext.render(this.postIds).asList(String.class);
         java.util.List<PostInsightsData> results = new ArrayList<>();
+        var context = apiContext(runContext);
 
         for (String postId : rPostIds) {
             try {
-                results.add(getPostInsights(runContext, postId));
+                results.add(getPostInsights(runContext, context, postId));
             } catch (Exception e) {
                 runContext.logger().error("Failed to retrieve insights for post ID: {}", postId, e);
                 results.add(
@@ -192,14 +194,14 @@ public class GetInsights extends AbstractFacebookTask {
             .build();
     }
 
-    private PostInsightsData getPostInsights(RunContext runContext, String postId) throws Exception {
+    private PostInsightsData getPostInsights(RunContext runContext, APIContext context, String postId) throws Exception {
         java.util.List<PostMetric> rMetrics = runContext.render(this.metrics).asList(PostMetric.class);
         Period rPeriod = runContext.render(this.period).as(Period.class).orElse(Period.LIFETIME);
         String rSince = runContext.render(this.since).as(String.class).orElse("");
         String rUntil = runContext.render(this.until).as(String.class).orElse("");
         DatePreset rDatePreset = runContext.render(this.datePreset).as(DatePreset.class).orElse(null);
 
-        var request = new PagePost(postId, apiContext(runContext))
+        var request = new PagePost(postId, context)
             .getInsights()
             .setPeriod(rPeriod.name().toLowerCase())
             .setMetric(

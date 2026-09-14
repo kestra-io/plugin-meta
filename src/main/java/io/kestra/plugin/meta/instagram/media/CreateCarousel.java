@@ -3,10 +3,11 @@ package io.kestra.plugin.meta.instagram.media;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.facebook.ads.sdk.APIContext;
 import com.facebook.ads.sdk.APIException;
 import com.facebook.ads.sdk.IGUser;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -80,17 +81,16 @@ public class CreateCarousel extends AbstractInstagramTask {
 
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
+        var context = apiContext(runContext);
+
         List<String> childContainerIds = new ArrayList<>();
         for (String mediaUrl : rMediaUrls) {
-            String containerId = createChildMediaContainer(runContext, rIgId, mediaUrl);
+            String containerId = createChildMediaContainer(context, rIgId, mediaUrl);
             childContainerIds.add(containerId);
         }
 
-        String carouselContainerId = createCarouselContainer(
-            runContext, rIgId, rToken, childContainerIds,
-            rCaptionText
-        );
-        String mediaId = publishMedia(runContext, rIgId, carouselContainerId);
+        String carouselContainerId = createCarouselContainer(context, rIgId, childContainerIds, rCaptionText);
+        String mediaId = publishMedia(context, rIgId, carouselContainerId);
 
         runContext.logger().info("Successfully created Instagram carousel post with ID: {}", mediaId);
 
@@ -101,9 +101,8 @@ public class CreateCarousel extends AbstractInstagramTask {
             .build();
     }
 
-    private String createChildMediaContainer(RunContext runContext, String igId, String mediaUrl)
-        throws Exception {
-        var request = new IGUser(igId, apiContext(runContext))
+    private String createChildMediaContainer(APIContext context, String igId, String mediaUrl) {
+        var request = new IGUser(igId, context)
             .createMedia()
             .setIsCarouselItem(Boolean.TRUE);
 
@@ -120,9 +119,9 @@ public class CreateCarousel extends AbstractInstagramTask {
         }
     }
 
-    private String createCarouselContainer(RunContext runContext, String igId, String token,
-        List<String> childContainerIds, String caption) throws Exception {
-        var request = new IGUser(igId, apiContext(runContext))
+    private String createCarouselContainer(APIContext context, String igId, List<String> childContainerIds,
+        String caption) {
+        var request = new IGUser(igId, context)
             .createMedia()
             .setMediaType(MediaType.CAROUSEL.name())
             .setChildren(String.join(",", childContainerIds));
@@ -138,10 +137,9 @@ public class CreateCarousel extends AbstractInstagramTask {
         }
     }
 
-    private String publishMedia(RunContext runContext, String igId, String containerId)
-        throws Exception {
+    private String publishMedia(APIContext context, String igId, String containerId) {
         try {
-            return new IGUser(igId, apiContext(runContext))
+            return new IGUser(igId, context)
                 .createMediaPublish()
                 .setCreationId(containerId)
                 .execute()

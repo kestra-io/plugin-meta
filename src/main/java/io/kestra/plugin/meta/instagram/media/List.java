@@ -11,11 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import com.facebook.ads.sdk.APIException;
-import com.facebook.ads.sdk.IGUser;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -124,62 +124,60 @@ public class List extends AbstractInstagramTask {
             throw new RuntimeException("Failed to list media: %s".formatted(e.getMessage()), e);
         }
 
-        {
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
-            JsonNode dataNode = responseJson.get("data");
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        JsonNode dataNode = responseJson.get("data");
 
-            Output.OutputBuilder output = Output.builder();
-            long size = 0L;
+        Output.OutputBuilder output = Output.builder();
+        long size = 0L;
 
-            switch (rFetchType) {
-                case FETCH_ONE -> {
-                    Map<String, Object> result = null;
-                    if (dataNode != null && dataNode.isArray() && !dataNode.isEmpty()) {
-                        result = convertNodeToMap(dataNode.get(0));
-                    }
-                    size = result == null ? 0L : 1L;
-                    output.row(result);
+        switch (rFetchType) {
+            case FETCH_ONE -> {
+                Map<String, Object> result = null;
+                if (dataNode != null && dataNode.isArray() && !dataNode.isEmpty()) {
+                    result = convertNodeToMap(dataNode.get(0));
                 }
-                case STORE -> {
-                    File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (
-                        OutputStream fileOutputStream = new BufferedOutputStream(
-                            new FileOutputStream(tempFile),
-                            FileSerde.BUFFER_SIZE
-                        )
-                    ) {
-                        if (dataNode != null && dataNode.isArray()) {
-                            for (JsonNode mediaNode : dataNode) {
-                                Map<String, Object> map = convertNodeToMap(mediaNode);
-                                FileSerde.write(fileOutputStream, map);
-                                size++;
-                            }
-                        }
-                    }
-                    output.uri(runContext.storage().putFile(tempFile));
-                }
-                case FETCH -> {
-                    java.util.List<Map<String, Object>> maps = new ArrayList<>();
+                size = result == null ? 0L : 1L;
+                output.row(result);
+            }
+            case STORE -> {
+                File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
+                try (
+                    OutputStream fileOutputStream = new BufferedOutputStream(
+                        new FileOutputStream(tempFile),
+                        FileSerde.BUFFER_SIZE
+                    )
+                ) {
                     if (dataNode != null && dataNode.isArray()) {
                         for (JsonNode mediaNode : dataNode) {
-                            maps.add(convertNodeToMap(mediaNode));
+                            Map<String, Object> map = convertNodeToMap(mediaNode);
+                            FileSerde.write(fileOutputStream, map);
                             size++;
                         }
                     }
-                    output.rows(maps);
                 }
-                case NONE -> {
-                    if (dataNode != null && dataNode.isArray()) {
-                        size = dataNode.size();
+                output.uri(runContext.storage().putFile(tempFile));
+            }
+            case FETCH -> {
+                java.util.List<Map<String, Object>> maps = new ArrayList<>();
+                if (dataNode != null && dataNode.isArray()) {
+                    for (JsonNode mediaNode : dataNode) {
+                        maps.add(convertNodeToMap(mediaNode));
+                        size++;
                     }
                 }
+                output.rows(maps);
             }
-
-            output.size(size);
-            runContext.logger().info("Successfully retrieved {} media items", size);
-
-            return output.build();
+            case NONE -> {
+                if (dataNode != null && dataNode.isArray()) {
+                    size = dataNode.size();
+                }
+            }
         }
+
+        output.size(size);
+        runContext.logger().info("Successfully retrieved {} media items", size);
+
+        return output.build();
     }
 
     private Map<String, Object> convertNodeToMap(JsonNode mediaNode) {
