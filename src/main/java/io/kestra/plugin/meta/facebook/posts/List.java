@@ -98,7 +98,6 @@ public class List extends AbstractFacebookTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rPageId = runContext.render(this.pageId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);
 
         var request = new Page(rPageId, apiContext(runContext)).getFeed();

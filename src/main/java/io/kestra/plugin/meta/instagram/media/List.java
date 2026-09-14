@@ -103,7 +103,6 @@ public class List extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         Integer rLimit = runContext.render(this.limit).as(Integer.class).orElse(DEFAULT_MEDIA_LIMIT);
         java.util.List<MediaField> rFields = runContext.render(this.fields).asList(MediaField.class);
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);

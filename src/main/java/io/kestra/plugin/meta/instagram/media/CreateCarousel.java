@@ -82,7 +82,7 @@ public class CreateCarousel extends AbstractInstagramTask {
 
         List<String> childContainerIds = new ArrayList<>();
         for (String mediaUrl : rMediaUrls) {
-            String containerId = createChildMediaContainer(runContext, rIgId, rToken, mediaUrl);
+            String containerId = createChildMediaContainer(runContext, rIgId, mediaUrl);
             childContainerIds.add(containerId);
         }
 
@@ -90,7 +90,7 @@ public class CreateCarousel extends AbstractInstagramTask {
             runContext, rIgId, rToken, childContainerIds,
             rCaptionText
         );
-        String mediaId = publishMedia(runContext, rIgId, rToken, carouselContainerId);
+        String mediaId = publishMedia(runContext, rIgId, carouselContainerId);
 
         runContext.logger().info("Successfully created Instagram carousel post with ID: {}", mediaId);
 
@@ -101,7 +101,7 @@ public class CreateCarousel extends AbstractInstagramTask {
             .build();
     }
 
-    private String createChildMediaContainer(RunContext runContext, String igId, String token, String mediaUrl)
+    private String createChildMediaContainer(RunContext runContext, String igId, String mediaUrl)
         throws Exception {
         var request = new IGUser(igId, apiContext(runContext))
             .createMedia()
@@ -138,7 +138,7 @@ public class CreateCarousel extends AbstractInstagramTask {
         }
     }
 
-    private String publishMedia(RunContext runContext, String igId, String token, String containerId)
+    private String publishMedia(RunContext runContext, String igId, String containerId)
         throws Exception {
         try {
             return new IGUser(igId, apiContext(runContext))

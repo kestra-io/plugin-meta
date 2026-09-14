@@ -68,6 +68,11 @@ public abstract class AbstractInstagramTest implements TestPropertyProvider {
     }
 
     @AfterAll
+    void restoreSdkExecutor() {
+        io.kestra.plugin.meta.facebook.PlainHttpRequestExecutor.restore();
+    }
+
+    @AfterAll
     void tearDown() {
         if (embeddedServer != null && embeddedServer.isRunning()) {
             embeddedServer.stop();

@@ -74,7 +74,6 @@ public class GetInsights extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rMediaId = runContext.render(this.mediaId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         List<InsightMetric> rMetrics = runContext.render(this.metrics).asList(InsightMetric.class);
 
         String metricsParam = rMetrics.stream()

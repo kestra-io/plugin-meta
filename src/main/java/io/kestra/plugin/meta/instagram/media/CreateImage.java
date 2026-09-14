@@ -67,8 +67,8 @@ public class CreateImage extends AbstractInstagramTask {
         String rImageUrl = runContext.render(this.imageUrl).as(String.class).orElseThrow();
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
-        String containerId = createMediaContainer(runContext, rIgId, rToken, rImageUrl, rCaptionText);
-        String mediaId = publishMedia(runContext, rIgId, rToken, containerId);
+        String containerId = createMediaContainer(runContext, rIgId, rImageUrl, rCaptionText);
+        String mediaId = publishMedia(runContext, rIgId, containerId);
 
         runContext.logger().info("Successfully created Instagram image post with ID: {}", mediaId);
 
@@ -78,7 +78,7 @@ public class CreateImage extends AbstractInstagramTask {
             .build();
     }
 
-    private String createMediaContainer(RunContext runContext, String igId, String token, String imageUrl,
+    private String createMediaContainer(RunContext runContext, String igId, String imageUrl,
         String caption)
         throws Exception {
         var request = new IGUser(igId, apiContext(runContext))
@@ -96,7 +96,7 @@ public class CreateImage extends AbstractInstagramTask {
         }
     }
 
-    private String publishMedia(RunContext runContext, String igId, String token, String containerId)
+    private String publishMedia(RunContext runContext, String igId, String containerId)
         throws Exception {
         try {
             return new IGUser(igId, apiContext(runContext))

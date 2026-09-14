@@ -16,9 +16,22 @@ import com.facebook.ads.sdk.APIRequest;
  * the same calls through the JDK client instead, leaving the mock controller as the source of truth.
  */
 public final class PlainHttpRequestExecutor implements APIRequest.IRequestExecutor {
+    private static APIRequest.IRequestExecutor original;
+
     /** Swaps the executor in, the SDK holds it statically so tests must put the default back. */
     public static void install() {
+        if (original == null) {
+            original = APIRequest.getExecutor();
+        }
+
         APIRequest.changeRequestExecutor(new PlainHttpRequestExecutor());
+    }
+
+    /** Puts the SDK's own transport back, so a later test in the same JVM is not left on the stub. */
+    public static void restore() {
+        if (original != null) {
+            APIRequest.changeRequestExecutor(original);
+        }
     }
 
     @Override

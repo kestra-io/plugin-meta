@@ -6,11 +6,13 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.facebook.ads.sdk.PagePost;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -82,7 +84,16 @@ public class Delete extends AbstractFacebookTask {
         // one failure must not stop the rest, the outputs report both lists
         for (String postId : rPostIds) {
             try {
-                new PagePost(postId, context).delete().execute();
+                // Graph answers 200 with success:false for a post it would not delete, so the body still decides
+                var response = new PagePost(postId, context).delete().execute();
+                JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getRawResponse());
+                JsonNode successNode = responseJson.get("success");
+
+                if (successNode == null || !successNode.asBoolean()) {
+                    runContext.logger().error("Facebook API returned success: false for post deletion: {}", postId);
+                    failedPostIds.add(postId);
+                    continue;
+                }
 
                 runContext.logger().info("Successfully deleted Facebook post with ID: {}", postId);
                 deletedPostIds.add(postId);

@@ -28,6 +28,11 @@ public class MockFacebookApiServer {
     @Delete("/{postId}")
     public HttpResponse<String> deletePost(@PathVariable String postId,
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
+        // Graph answers 200 with success:false for a post it will not delete
+        if (postId.contains("refused")) {
+            return HttpResponse.ok("{\"success\": false}");
+        }
+
         return HttpResponse.ok("{\"success\": true}");
     }
 
