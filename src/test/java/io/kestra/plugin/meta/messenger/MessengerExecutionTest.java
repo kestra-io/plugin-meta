@@ -33,6 +33,9 @@ public class MessengerExecutionTest extends AbstractMetaTest {
         repositoryLoader.load(Objects.requireNonNull(MessengerExecutionTest.class.getClassLoader().getResource("flows/common")));
         repositoryLoader.load(Objects.requireNonNull(MessengerExecutionTest.class.getClassLoader().getResource("flows/messenger")));
         this.runner.run();
+
+        io.kestra.plugin.meta.facebook.PlainHttpRequestExecutor.install();
+        MockMessengerApiServer.bodies.clear();
     }
 
     @Test
@@ -69,5 +72,24 @@ public class MessengerExecutionTest extends AbstractMetaTest {
         assertThat(receivedData, containsString("Environment: DEV"));
         assertThat(receivedData, containsString("Status: SUCCESS"));
         assertThat(receivedData, containsString("\"recipient\":{\"id\":\"24745216345137108\"}"));
+    }
+
+    /** Every other messenger flow sets url, so this is the only coverage of the SDK path. */
+    @Test
+    void flow_sendsThroughTheSdkWhenOnlyApiBaseUrlIsSet() throws Exception {
+        var execution = runAndCaptureExecution(
+            "main-flow-that-succeeds",
+            "messenger-sdk"
+        );
+
+        String receivedData = waitForWebhookData(
+            () -> MockMessengerApiServer.bodies.isEmpty() ? null : MockMessengerApiServer.bodies.getFirst(),
+            5000
+        );
+
+        var decoded = java.net.URLDecoder.decode(receivedData, java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(decoded, containsString("24745216345137108"));
+        assertThat(decoded, containsString(execution.getId()));
+        assertThat(decoded, containsString("Sent through the SDK"));
     }
 }

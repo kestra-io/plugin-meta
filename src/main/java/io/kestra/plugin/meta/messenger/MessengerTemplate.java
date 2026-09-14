@@ -8,6 +8,10 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
+import com.facebook.ads.sdk.APIContext;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.Page;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
@@ -62,9 +66,19 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
-    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages.")
+    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages. When set, the request is posted verbatim instead of going through the SDK.")
     @PluginProperty(group = "connection")
     protected Property<String> url;
+
+    @Schema(title = "API Version", description = "Graph API version to call. Defaults to v23.0.")
+    @Builder.Default
+    @PluginProperty(group = "advanced")
+    protected Property<String> apiVersion = Property.ofValue("v23.0");
+
+    @Schema(title = "Base API URL", description = "Base Graph API URL. Defaults to `https://graph.facebook.com`.")
+    @Builder.Default
+    @PluginProperty(group = "connection")
+    protected Property<String> apiBaseUrl = Property.ofValue("https://graph.facebook.com");
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
@@ -78,15 +92,15 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
             throw new IllegalArgumentException("Atleast one RecipientId is required");
         }
 
-        String apiUrl = rUrl
-            .orElseGet(
-                () -> String.format(
-                    "https://graph.facebook.com/v23.0/%s/messages",
-                    rPageId
-                )
-            );
-
         String messageText = getMessageText(runContext);
+
+        if (rUrl.isEmpty()) {
+            sendThroughSdk(runContext, rPageId, rRecipientIds, rMessagingType, messageText);
+
+            return null;
+        }
+
+        String apiUrl = rUrl.get();
 
         try (HttpClient client = new HttpClient(runContext, super.httpClientConfigurationWithOptions())) {
             for (String recipientId : rRecipientIds) {
@@ -123,6 +137,38 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
         }
 
         return null;
+    }
+
+    /** The url override stays on the verbatim POST, since an arbitrary endpoint has no SDK equivalent. */
+    private void sendThroughSdk(RunContext runContext, String pageId, List<String> recipientIds,
+        MessagingType messagingType, String messageText) throws Exception {
+        var context = apiContext(runContext);
+
+        for (String recipientId : recipientIds) {
+            runContext.logger().debug("Sending Messenger message to {}", recipientId);
+
+            try {
+                new Page(pageId, context)
+                    .createMessage()
+                    .setRecipient(JacksonMapper.ofJson().writeValueAsString(Map.of("id", recipientId)))
+                    .setMessagingType(messagingType.name())
+                    .setMessage(JacksonMapper.ofJson().writeValueAsString(Map.of("text", messageText)))
+                    .execute();
+
+                runContext.logger().info("Messenger message sent successfully to {}", recipientId);
+            } catch (APIException e) {
+                runContext.logger().error("Failed to send Messenger message to {}: {}", recipientId, e.getMessage());
+            }
+        }
+    }
+
+    /** The seven argument constructor is the only seam for the base URL, which apiBaseUrl controls. */
+    private APIContext apiContext(RunContext runContext) throws Exception {
+        var rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+        var rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v23.0");
+        var rBaseUrl = runContext.render(this.apiBaseUrl).as(String.class).orElse("https://graph.facebook.com");
+
+        return new APIContext(rBaseUrl, rBaseUrl, rVersion, rToken, null, null, false);
     }
 
     private String getMessageText(RunContext runContext) throws Exception {

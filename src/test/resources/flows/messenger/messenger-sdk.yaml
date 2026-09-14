@@ -1,0 +1,29 @@
+id: messenger-sdk
+namespace: io.kestra.tests
+
+inputs:
+  - id: url
+    type: STRING
+    defaults: "http://localhost:59443"
+
+tasks:
+  - id: messenger-sdk-send
+    type: io.kestra.plugin.meta.messenger.MessengerExecution
+    apiBaseUrl: "{{ inputs.url }}"
+    apiVersion: "v23.0"
+    pageId: "827899830403766"
+    accessToken: "test_access_token"
+    recipientIds:
+      - "24745216345137108"
+    executionId: "{{ trigger.executionId }}"
+    customMessage: "Sent through the SDK"
+
+triggers:
+  - id: on_success
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow_trigger
+      flows:
+        - namespace: io.kestra.tests
+          flowId: main-flow-that-succeeds
+          states: [ SUCCESS ]
