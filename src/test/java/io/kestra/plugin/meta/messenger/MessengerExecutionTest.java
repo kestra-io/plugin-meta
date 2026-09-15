@@ -46,7 +46,7 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             "messenger"
         );
 
-        String receivedData = waitForWebhookData(() -> FakeWebhookController.data, 5000);
+        String receivedData = waitForWebhookData(() -> webhookDataFor(execution.getId()), 5000);
 
         assertThat(receivedData, containsString(execution.getId()));
         assertThat(receivedData, containsString("https://mysuperhost.com/kestra/ui"));
@@ -64,7 +64,7 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             "messenger-successful"
         );
 
-        String receivedData = waitForWebhookData(() -> FakeWebhookController.data, 5000);
+        String receivedData = waitForWebhookData(() -> webhookDataFor(execution.getId()), 5000);
 
         assertThat(receivedData, containsString(execution.getId()));
         assertThat(receivedData, containsString("https://mysuperhost.com/kestra/ui"));
@@ -116,5 +116,12 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             .filter(b -> b.contains(marker))
             .findFirst()
             .orElse(null);
+    }
+
+    /** The webhook field is shared and the messenger flows run concurrently, so wait for this execution's own post. */
+    private static String webhookDataFor(String executionId) {
+        var data = FakeWebhookController.data;
+
+        return data != null && data.contains(executionId) ? data : null;
     }
 }
