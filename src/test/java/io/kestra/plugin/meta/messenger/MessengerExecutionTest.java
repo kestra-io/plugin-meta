@@ -83,15 +83,14 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             "messenger-sdk"
         );
 
-        String receivedData = waitForWebhookData(
-            () -> MockMessengerApiServer.bodies.isEmpty() ? null : MockMessengerApiServer.bodies.getFirst(),
-            5000
-        );
+        // the messenger flows share an upstream trigger and CI runs them concurrently, so find this flow's own body
+        var body = waitForWebhookData(() -> bodyContaining("Sent+through+the+SDK"), 5000);
+        var decoded = java.net.URLDecoder.decode(body, java.nio.charset.StandardCharsets.UTF_8);
 
-        var decoded = java.net.URLDecoder.decode(receivedData, java.nio.charset.StandardCharsets.UTF_8);
         assertThat(decoded, containsString("24745216345137108"));
         assertThat(decoded, containsString(execution.getId()));
-        assertThat(decoded, containsString("Sent through the SDK"));
+        // the SDK posts form encoded, which is what marks this as the SDK path
+        assertThat(body.startsWith("{"), is(false));
     }
 
     /** The SDK cannot express timeouts or custom headers, so options must keep the pre-SDK request. */
@@ -102,17 +101,20 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             "messenger-options"
         );
 
-        waitForWebhookData(() -> FakeWebhookController.data, 5000);
-
         // both paths hit the same mock route, so the body shape is what tells them apart: the SDK posts form
         // encoded, the pre-SDK path posts JSON
-        var body = MockMessengerApiServer.bodies.stream()
-            .filter(b -> b.contains("Options keeps the pre-SDK path"))
-            .findFirst()
-            .orElseThrow();
+        var body = waitForWebhookData(() -> bodyContaining("Options keeps the pre-SDK path"), 5000);
 
         assertThat(body.trim().startsWith("{"), is(true));
         assertThat(body, containsString("\"messaging_type\""));
         assertThat(execution.getState().getCurrent().isSuccess(), is(true));
+    }
+
+    /** Null until a body carrying this marker arrives, so concurrent flows cannot cross-contaminate. */
+    private static String bodyContaining(String marker) {
+        return MockMessengerApiServer.bodies.stream()
+            .filter(b -> b.contains(marker))
+            .findFirst()
+            .orElse(null);
     }
 }
