@@ -15,6 +15,7 @@ import com.facebook.ads.sdk.Page;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
@@ -25,7 +26,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString(exclude = { "accessToken" })
@@ -66,7 +66,10 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
-    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages. When set, or when `options` is set, the request is posted directly instead of through the SDK.")
+    @Schema(
+        title = "Override URL for testing",
+        description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages. When set, or when `options` is set, the request is posted directly instead of through the SDK."
+    )
     @PluginProperty(group = "connection")
     protected Property<String> url;
 

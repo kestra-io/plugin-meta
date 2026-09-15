@@ -19,3 +19,12 @@ Publish to Facebook and Instagram, send Messenger messages, and trigger WhatsApp
 `messenger.MessengerExecution` sends a structured execution summary to one or more Messenger recipients identified by `recipientIds` (page-scoped user IDs). Set `textBody` for a direct message or use `templateUri` with `templateRenderMap` for a templated message.
 
 `whatsapp.WhatsAppIncomingWebhook` sends a message via a WhatsApp webhook — set `payload` to a JSON body in the WhatsApp Cloud API message format. `whatsapp.WhatsAppExecution` sends a structured execution summary and is designed for use with a [Flow trigger](https://kestra.io/docs/workflow-components/triggers) in a dedicated monitoring namespace.
+
+## Messenger endpoint
+
+`MessengerExecution` and `MessengerTemplate` send through the Meta Business SDK by default. `apiBaseUrl` (default `https://graph.facebook.com`) and `apiVersion` (default `v23.0`) point it elsewhere. Setting `url`, or any `options`, sends the request directly instead, because the SDK has no equivalent for custom timeouts or headers.
+
+## Access tokens in request URLs
+
+The SDK sends `access_token` as a request parameter rather than an `Authorization` header, so on GET and DELETE it travels in the query string. If you run an outbound proxy that records full URLs, the token will appear in those logs.
+

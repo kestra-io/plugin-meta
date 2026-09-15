@@ -1,9 +1,9 @@
 package io.kestra.plugin.meta.instagram.media;
 
 import java.time.Duration;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -14,9 +14,9 @@ import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -30,7 +30,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -64,6 +63,16 @@ public class CreateVideo extends AbstractInstagramTask {
     /** Matches the read timeout the pre-SDK poll set on its HTTP client. */
     private static final Duration POLL_TIMEOUT = Duration.ofSeconds(30);
 
+    /** Its own pool, so a hung poll cannot occupy a shared ForkJoinPool.commonPool thread. */
+    private static final java.util.concurrent.ExecutorService POLL_EXECUTOR = java.util.concurrent.Executors.newCachedThreadPool(
+        r ->
+        {
+            var thread = new Thread(r, "instagram-media-poll");
+            thread.setDaemon(true);
+
+            return thread;
+        }
+    );
 
     @Schema(title = "Video URL", description = "Public HTTPS URL of the video to upload (e.g. MP4).")
     @NotNull
@@ -82,7 +91,6 @@ public class CreateVideo extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rVideoUrl = runContext.render(this.videoUrl).as(String.class).orElseThrow();
         VideoType rVideoType = runContext.render(this.videoType).as(VideoType.class).orElse(VideoType.VIDEO);
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
@@ -152,7 +160,7 @@ public class CreateVideo extends AbstractInstagramTask {
         // deadline between polls, so a hung call has to be bounded here or the 5 minute ceiling never fires
         String rawResponse;
         try {
-            rawResponse = CompletableFuture
+            var future = CompletableFuture
                 .supplyAsync(
                     () ->
                     {
@@ -165,13 +173,21 @@ public class CreateVideo extends AbstractInstagramTask {
                         } catch (APIException e) {
                             throw new CompletionException(e);
                         }
-                    }
-                )
-                .get(POLL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            runContext.logger().debug("Container {} status poll timed out after {}", containerId, POLL_TIMEOUT);
+                    },
+                    POLL_EXECUTOR
+                );
 
-            return false;
+            try {
+                rawResponse = future.get(POLL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                // get() only stops waiting, the call itself keeps running until the socket gives up
+                future.cancel(true);
+                runContext.logger().debug("Container {} status poll timed out after {}", containerId, POLL_TIMEOUT);
+
+                return false;
+            }
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Failed to read the status of container %s".formatted(containerId), e.getCause());
         }
 
         JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
@@ -190,7 +206,7 @@ public class CreateVideo extends AbstractInstagramTask {
         // Status is IN_PROGRESS, continue waiting
         runContext.logger().debug("Video still processing, status: {}", statusCode);
 
-    return false; // Not ready yet
+        return false; // Not ready yet
     }
 
     private String publishMedia(APIContext context, String igId, String containerId) {

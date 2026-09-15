@@ -1,13 +1,13 @@
 package io.kestra.plugin.meta.instagram.media;
 
-
+import com.facebook.ads.sdk.APIContext;
 import com.facebook.ads.sdk.APIException;
 import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
@@ -19,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -63,12 +62,13 @@ public class CreateImage extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rImageUrl = runContext.render(this.imageUrl).as(String.class).orElseThrow();
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
-        String containerId = createMediaContainer(runContext, rIgId, rImageUrl, rCaptionText);
-        String mediaId = publishMedia(runContext, rIgId, containerId);
+        var context = apiContext(runContext);
+
+        String containerId = createMediaContainer(context, rIgId, rImageUrl, rCaptionText);
+        String mediaId = publishMedia(context, rIgId, containerId);
 
         runContext.logger().info("Successfully created Instagram image post with ID: {}", mediaId);
 
@@ -78,10 +78,8 @@ public class CreateImage extends AbstractInstagramTask {
             .build();
     }
 
-    private String createMediaContainer(RunContext runContext, String igId, String imageUrl,
-        String caption)
-        throws Exception {
-        var request = new IGUser(igId, apiContext(runContext))
+    private String createMediaContainer(APIContext context, String igId, String imageUrl, String caption) {
+        var request = new IGUser(igId, context)
             .createMedia()
             .setImageUrl(imageUrl);
 
@@ -96,10 +94,9 @@ public class CreateImage extends AbstractInstagramTask {
         }
     }
 
-    private String publishMedia(RunContext runContext, String igId, String containerId)
-        throws Exception {
+    private String publishMedia(APIContext context, String igId, String containerId) {
         try {
-            return new IGUser(igId, apiContext(runContext))
+            return new IGUser(igId, context)
                 .createMediaPublish()
                 .setCreationId(containerId)
                 .execute()

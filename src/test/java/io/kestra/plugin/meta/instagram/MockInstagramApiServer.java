@@ -1,8 +1,8 @@
 package io.kestra.plugin.meta.instagram;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +28,7 @@ public class MockInstagramApiServer {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // Create media container (POST /{ig_id}/media)
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED})
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
     @Post("/{igId}/media")
     public HttpResponse<String> createMediaContainer(
         @PathVariable String igId,
@@ -48,7 +48,7 @@ public class MockInstagramApiServer {
     }
 
     // Publish media (POST /{ig_id}/media_publish)
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED})
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
     @Post("/{igId}/media_publish")
     public HttpResponse<String> publishMedia(
         @PathVariable String igId,

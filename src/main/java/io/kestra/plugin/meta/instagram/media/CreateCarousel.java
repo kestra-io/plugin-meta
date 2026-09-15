@@ -8,9 +8,9 @@ import com.facebook.ads.sdk.APIException;
 import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.meta.instagram.AbstractInstagramTask;
@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -72,7 +71,6 @@ public class CreateCarousel extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         List<String> rMediaUrls = runContext.render(this.mediaUrls).asList(String.class);
 
         if (rMediaUrls.size() < MIN_CAROUSEL_ITEMS || rMediaUrls.size() > MAX_CAROUSEL_ITEMS) {

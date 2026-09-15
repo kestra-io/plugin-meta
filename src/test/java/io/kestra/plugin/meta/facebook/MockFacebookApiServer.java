@@ -18,7 +18,7 @@ import jakarta.annotation.Nullable;
 @Requires(property = "mock.instagram.enabled", value = "false", defaultValue = "false")
 public class MockFacebookApiServer {
 
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED})
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_FORM_URLENCODED })
     @Post("/{pageId}/feed")
     public HttpResponse<String> createPost(@PathVariable String pageId,
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization) {
