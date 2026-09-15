@@ -66,7 +66,7 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
     @PluginProperty(group = "advanced")
     protected Property<String> textBody;
 
-    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages. When set, the request is posted verbatim instead of going through the SDK.")
+    @Schema(title = "Override URL for testing", description = "Optional Graph API endpoint override; defaults to https://graph.facebook.com/v23.0/{pageId}/messages. When set, or when `options` is set, the request is posted directly instead of through the SDK.")
     @PluginProperty(group = "connection")
     protected Property<String> url;
 
@@ -94,13 +94,16 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
 
         String messageText = getMessageText(runContext);
 
-        if (rUrl.isEmpty()) {
+        // the SDK has no seam for timeouts or custom headers, so options keeps the caller on the pre-SDK request
+        if (rUrl.isEmpty() && options == null) {
             sendThroughSdk(runContext, rPageId, rRecipientIds, rMessagingType, messageText);
 
             return null;
         }
 
-        String apiUrl = rUrl.get();
+        String apiUrl = rUrl.orElseGet(
+            () -> String.format("https://graph.facebook.com/v23.0/%s/messages", rPageId)
+        );
 
         try (HttpClient client = new HttpClient(runContext, super.httpClientConfigurationWithOptions())) {
             for (String recipientId : rRecipientIds) {

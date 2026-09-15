@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 @KestraTest
@@ -91,5 +92,23 @@ public class MessengerExecutionTest extends AbstractMetaTest {
         assertThat(decoded, containsString("24745216345137108"));
         assertThat(decoded, containsString(execution.getId()));
         assertThat(decoded, containsString("Sent through the SDK"));
+    }
+
+    /** The SDK cannot express timeouts or custom headers, so options must keep the pre-SDK request. */
+    @Test
+    void flow_optionsKeepsThePreSdkRequest() throws Exception {
+        var execution = runAndCaptureExecution(
+            "main-flow-that-succeeds",
+            "messenger-options"
+        );
+
+        waitForWebhookData(() -> FakeWebhookController.data, 5000);
+
+        // the other messenger flows share the upstream trigger, so identify this one by its own message
+        assertThat(
+            MockMessengerApiServer.bodies.stream().noneMatch(b -> b.contains("Options+keeps+the+pre-SDK+path")),
+            is(true)
+        );
+        assertThat(execution.getState().getCurrent().isSuccess(), is(true));
     }
 }
