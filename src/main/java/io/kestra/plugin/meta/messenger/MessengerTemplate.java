@@ -101,9 +101,10 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
             return null;
         }
 
-        String apiUrl = rUrl.orElseGet(
-            () -> String.format("https://graph.facebook.com/v23.0/%s/messages", rPageId)
-        );
+        // apiBaseUrl and apiVersion must drive the fallback too, or a configured base is bypassed for real Facebook
+        String rBaseUrl = runContext.render(this.apiBaseUrl).as(String.class).orElse("https://graph.facebook.com");
+        String rVersion = runContext.render(this.apiVersion).as(String.class).orElse("v23.0");
+        String apiUrl = rUrl.orElseGet(() -> "%s/%s/%s/messages".formatted(rBaseUrl, rVersion, rPageId));
 
         try (HttpClient client = new HttpClient(runContext, super.httpClientConfigurationWithOptions())) {
             for (String recipientId : rRecipientIds) {

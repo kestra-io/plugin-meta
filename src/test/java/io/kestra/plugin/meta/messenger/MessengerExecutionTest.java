@@ -104,11 +104,15 @@ public class MessengerExecutionTest extends AbstractMetaTest {
 
         waitForWebhookData(() -> FakeWebhookController.data, 5000);
 
-        // the other messenger flows share the upstream trigger, so identify this one by its own message
-        assertThat(
-            MockMessengerApiServer.bodies.stream().noneMatch(b -> b.contains("Options+keeps+the+pre-SDK+path")),
-            is(true)
-        );
+        // both paths hit the same mock route, so the body shape is what tells them apart: the SDK posts form
+        // encoded, the pre-SDK path posts JSON
+        var body = MockMessengerApiServer.bodies.stream()
+            .filter(b -> b.contains("Options keeps the pre-SDK path"))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(body.trim().startsWith("{"), is(true));
+        assertThat(body, containsString("\"messaging_type\""));
         assertThat(execution.getState().getCurrent().isSuccess(), is(true));
     }
 }
