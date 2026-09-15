@@ -164,7 +164,11 @@ public abstract class MessengerTemplate extends AbstractMetaConnection {
 
                 runContext.logger().info("Messenger message sent successfully to {}", recipientId);
             } catch (APIException e) {
-                runContext.logger().error("Failed to send Messenger message to {}: {}", recipientId, e.getMessage());
+                // the pre-SDK client throws on a non-2xx unless allowFailed is set, so swallowing here would let a
+                // flow whose notifications all failed still report SUCCESS
+                throw new IllegalStateException(
+                    "Failed to send Messenger message to %s: %s".formatted(recipientId, e.getMessage()), e
+                );
             }
         }
     }

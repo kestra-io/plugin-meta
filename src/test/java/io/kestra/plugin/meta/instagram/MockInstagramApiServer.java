@@ -24,6 +24,11 @@ import io.micronaut.http.annotation.*;
 @Requires(property = "mock.facebook.enabled", value = "false", defaultValue = "false")
 public class MockInstagramApiServer {
 
+    /** Any video URL carrying this marker gets a container Graph reports as ERROR. */
+    public static final String FAILING_VIDEO = "processing-error";
+
+    private static final String FAILING_CONTAINER_ID = "17910412629238320";
+
     private static final Map<String, String> containerMediaTypes = new ConcurrentHashMap<>();
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -35,7 +40,10 @@ public class MockInstagramApiServer {
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
         @Body String body) {
         // Parse the body to check media_type and store it
-        String containerId = "17910412629238319"; // Container ID
+        // a distinct id rather than a flag, so a failing container cannot bleed into another test
+        String containerId = String.valueOf(field(body, "video_url")).contains(FAILING_VIDEO)
+            ? FAILING_CONTAINER_ID
+            : "17910412629238319"; // Container ID
         // the container id is constant, so clear on absence or a previous video run leaks into the next image run
         String mediaType = field(body, "media_type");
         if (mediaType != null) {
@@ -118,8 +126,10 @@ public class MockInstagramApiServer {
         @PathVariable String containerId,
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
         @Nullable @QueryValue String fields) throws IOException {
-        // Always return FINISHED status to allow immediate publishing in tests
-        return HttpResponse.ok("{\"status_code\":\"FINISHED\",\"id\":\"" + containerId + "\"}");
+        // FINISHED lets the other tests publish immediately, the one failing container reports Graph's terminal state
+        String status = FAILING_CONTAINER_ID.equals(containerId) ? "ERROR" : "FINISHED";
+
+        return HttpResponse.ok("{\"status_code\":\"" + status + "\",\"id\":\"" + containerId + "\"}");
     }
 
     /** The SDK posts form encoded, the pre-SDK tasks post JSON, so read a field from either shape. */

@@ -6,10 +6,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.facebook.ads.sdk.APIException;
 import com.facebook.ads.sdk.IGUser;
@@ -106,19 +104,19 @@ public class List extends AbstractInstagramTask {
         java.util.List<MediaField> rFields = runContext.render(this.fields).asList(MediaField.class);
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);
 
-        String fieldsParam = rFields.stream()
-            .map(field -> field.name().toLowerCase())
-            .collect(Collectors.joining(","));
+        var request = new IGUser(rIgId, apiContext(runContext))
+            .getMedia()
+            .setParam("limit", rLimit);
+
+        // an empty list would otherwise ask Graph for a field named "", which it rejects
+        if (!rFields.isEmpty()) {
+            request.requestFields(rFields.stream().map(field -> field.name().toLowerCase()).toList());
+        }
 
         String rawResponse;
         try {
             // the raw response keeps every field the caller asked for, the typed model would drop the unknown ones
-            rawResponse = new IGUser(rIgId, apiContext(runContext))
-                .getMedia()
-                .requestFields(Arrays.asList(fieldsParam.split(",")))
-                .setParam("limit", rLimit)
-                .execute()
-                .getRawResponse();
+            rawResponse = request.execute().getRawResponse();
         } catch (APIException e) {
             throw new RuntimeException("Failed to list media: %s".formatted(e.getMessage()), e);
         }

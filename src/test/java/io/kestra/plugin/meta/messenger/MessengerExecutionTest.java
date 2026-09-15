@@ -119,10 +119,11 @@ public class MessengerExecutionTest extends AbstractMetaTest {
             .orElse(null);
     }
 
-    /** The webhook field is shared and the messenger flows run concurrently, so wait for this execution's own post. */
+    /** The webhook capture is shared and the messenger flows run concurrently, so pick this execution's own post. */
     private static String webhookDataFor(String executionId) {
-        var data = FakeWebhookController.data;
-
-        return data != null && data.contains(executionId) ? data : null;
+        return FakeWebhookController.bodies.stream()
+            .filter(body -> body.contains(executionId))
+            .findFirst()
+            .orElse(null);
     }
 }

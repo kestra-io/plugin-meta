@@ -64,7 +64,7 @@ public class WhatsAppIncomingWebhookTest {
 
         task.run(runContext);
 
-        assertThat(FakeWebhookController.data, containsString("ge *with some bold text* an"));
+        assertThat(FakeWebhookController.last(), containsString("ge *with some bold text* an"));
     }
 
 }

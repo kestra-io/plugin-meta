@@ -62,7 +62,7 @@ public class AbstractMetaTest {
 
     @BeforeEach
     void reset() {
-        FakeWebhookController.data = null;
+        FakeWebhookController.bodies.clear();
     }
 
     /**

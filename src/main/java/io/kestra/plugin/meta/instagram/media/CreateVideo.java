@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -62,17 +64,6 @@ import lombok.experimental.SuperBuilder;
 public class CreateVideo extends AbstractInstagramTask {
     /** Matches the read timeout the pre-SDK poll set on its HTTP client. */
     private static final Duration POLL_TIMEOUT = Duration.ofSeconds(30);
-
-    /** Its own pool, so a hung poll cannot occupy a shared ForkJoinPool.commonPool thread. */
-    private static final java.util.concurrent.ExecutorService POLL_EXECUTOR = java.util.concurrent.Executors.newCachedThreadPool(
-        r ->
-        {
-            var thread = new Thread(r, "instagram-media-poll");
-            thread.setDaemon(true);
-
-            return thread;
-        }
-    );
 
     @Schema(title = "Video URL", description = "Public HTTPS URL of the video to upload (e.g. MP4).")
     @NotNull
@@ -137,13 +128,29 @@ public class CreateVideo extends AbstractInstagramTask {
     private void waitForContainerReady(RunContext runContext, APIContext context, String containerId) throws Exception {
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
 
+        // one thread for the whole wait, and it dies with the task, so a hung socket cannot pile up across executions
+        ExecutorService poller = Executors.newSingleThreadExecutor(
+            r ->
+            {
+                var thread = new Thread(r, "instagram-media-poll");
+                thread.setDaemon(true);
+
+                return thread;
+            }
+        );
+
         try {
             Await.until(
                 () ->
                 {
                     try {
-                        return checkContainerStatus(runContext, context, containerId);
+                        return checkContainerStatus(runContext, poller, context, containerId);
+                    } catch (VideoProcessingFailedException e) {
+                        // Graph has given its verdict, polling on would only turn it into a misleading timeout
+                        throw e;
                     } catch (Exception e) {
+                        runContext.logger().debug("Container {} status poll failed, retrying: {}", containerId, e.getMessage());
+
                         return false;
                     }
                 },
@@ -152,10 +159,19 @@ public class CreateVideo extends AbstractInstagramTask {
             );
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out after 5 minutes while waiting for video processing to complete for container: " + containerId, e);
+        } finally {
+            poller.shutdownNow();
         }
     }
 
-    private boolean checkContainerStatus(RunContext runContext, APIContext context, String containerId) throws Exception {
+    /** Terminal, unlike a failed poll, so it has to escape the retry loop instead of reading as "not ready yet". */
+    private static class VideoProcessingFailedException extends RuntimeException {
+        VideoProcessingFailedException(String message) {
+            super(message);
+        }
+    }
+
+    private boolean checkContainerStatus(RunContext runContext, ExecutorService poller, APIContext context, String containerId) throws Exception {
         // the SDK exposes no timeout seam and HttpsURLConnection defaults to infinite, and Await only checks its
         // deadline between polls, so a hung call has to be bounded here or the 5 minute ceiling never fires
         String rawResponse;
@@ -174,7 +190,7 @@ public class CreateVideo extends AbstractInstagramTask {
                             throw new CompletionException(e);
                         }
                     },
-                    POLL_EXECUTOR
+                    poller
                 );
 
             try {
@@ -201,7 +217,7 @@ public class CreateVideo extends AbstractInstagramTask {
             runContext.logger().info("Video processing completed for container: {}", containerId);
             return true; // Processing complete
         } else if ("ERROR".equals(statusCode)) {
-            throw new RuntimeException("Video processing failed for container: " + containerId);
+            throw new VideoProcessingFailedException("Video processing failed for container: " + containerId);
         }
         // Status is IN_PROGRESS, continue waiting
         runContext.logger().debug("Video still processing, status: {}", statusCode);
