@@ -3,9 +3,11 @@ package io.kestra.plugin.meta.instagram;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
 
@@ -27,7 +29,15 @@ public class MockInstagramApiServer {
     /** Any video URL carrying this marker gets a container Graph reports as ERROR. */
     public static final String FAILING_VIDEO = "processing-error";
 
+    /** Any video URL carrying this marker gets a container whose first status poll never answers in time. */
+    public static final String STALLING_VIDEO = "first-poll-stalls";
+
     private static final String FAILING_CONTAINER_ID = "17910412629238320";
+
+    private static final String STALLING_CONTAINER_ID = "17910412629238321";
+
+    /** Only the first poll of the stalling container hangs, the rest answer, so a wedged poller never recovers. */
+    private static final AtomicBoolean stalledOnce = new AtomicBoolean();
 
     private static final Map<String, String> containerMediaTypes = new ConcurrentHashMap<>();
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -41,9 +51,14 @@ public class MockInstagramApiServer {
         @Body String body) {
         // Parse the body to check media_type and store it
         // a distinct id rather than a flag, so a failing container cannot bleed into another test
-        String containerId = String.valueOf(field(body, "video_url")).contains(FAILING_VIDEO)
-            ? FAILING_CONTAINER_ID
-            : "17910412629238319"; // Container ID
+        String videoUrl = String.valueOf(field(body, "video_url"));
+        String containerId = "17910412629238319"; // Container ID
+        if (videoUrl.contains(FAILING_VIDEO)) {
+            containerId = FAILING_CONTAINER_ID;
+        } else if (videoUrl.contains(STALLING_VIDEO)) {
+            containerId = STALLING_CONTAINER_ID;
+            stalledOnce.set(false);
+        }
         // the container id is constant, so clear on absence or a previous video run leaks into the next image run
         String mediaType = field(body, "media_type");
         if (mediaType != null) {
@@ -126,6 +141,17 @@ public class MockInstagramApiServer {
         @PathVariable String containerId,
         @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
         @Nullable @QueryValue String fields) throws IOException {
+        // never answers, which is the real shape of a stalled Graph: the SDK sets no read timeout so the poll that
+        // hit it is gone for good, and only a fresh thread can carry the next one. Interruptible so server shutdown
+        // does not wait on it.
+        if (STALLING_CONTAINER_ID.equals(containerId) && stalledOnce.compareAndSet(false, true)) {
+            try {
+                Thread.sleep(Duration.ofMinutes(10));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         // FINISHED lets the other tests publish immediately, the one failing container reports Graph's terminal state
         String status = FAILING_CONTAINER_ID.equals(containerId) ? "ERROR" : "FINISHED";
 

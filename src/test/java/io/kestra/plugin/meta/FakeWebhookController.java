@@ -20,9 +20,12 @@ public class FakeWebhookController {
 
     public static Map<String, String> headers = new HashMap<>();
 
-    /** Null until something arrives, which is the shape the wait helpers poll on. */
-    public static String last() {
-        return bodies.isEmpty() ? null : bodies.getLast();
+    /** Null until a body carrying the marker arrives, which is the shape the wait helpers poll on. */
+    public static String bodyContaining(String marker) {
+        return bodies.stream()
+            .filter(body -> body.contains(marker))
+            .findFirst()
+            .orElse(null);
     }
 
     @Post

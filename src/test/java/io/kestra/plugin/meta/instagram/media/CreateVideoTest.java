@@ -76,4 +76,22 @@ class CreateVideoTest extends AbstractInstagramTest {
         assertThat(thrown.getMessage(), containsString("Video processing failed for container"));
         assertThat(thrown.getMessage(), not(containsString("Timed out")));
     }
+
+    /** A poll that hangs cannot be interrupted, so the next one must still get through and publish. */
+    @Test
+    @Timeout(180)
+    void createVideoRecoversAfterAStalledPoll() throws Exception {
+        RunContext runContext = runContextFactory.of();
+
+        CreateVideo task = CreateVideo.builder()
+            .host(Property.ofValue(embeddedServer.getURL().toString()))
+            .igId(Property.ofValue("mock-ig-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .videoUrl(Property.ofValue("https://example.com/%s.mp4".formatted(MockInstagramApiServer.STALLING_VIDEO)))
+            .build();
+
+        CreateVideo.Output output = task.run(runContext);
+
+        assertThat(output.getMediaId(), notNullValue());
+    }
 }

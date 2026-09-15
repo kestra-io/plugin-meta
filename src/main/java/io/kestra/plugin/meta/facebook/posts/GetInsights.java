@@ -207,9 +207,16 @@ public class GetInsights extends AbstractFacebookTask {
                 rMetrics.stream()
                     .map(metric -> metric.name().toLowerCase())
                     .collect(java.util.stream.Collectors.joining(","))
-            )
-            .setSince(rSince)
-            .setUntil(rUntil);
+            );
+
+        // an unset bound would otherwise go out as an empty since= or until=, which Graph rejects
+        if (!rSince.isEmpty()) {
+            request.setSince(rSince);
+        }
+
+        if (!rUntil.isEmpty()) {
+            request.setUntil(rUntil);
+        }
 
         if (rDatePreset != null && rSince.isEmpty() && rUntil.isEmpty()) {
             request.setDatePreset(rDatePreset.name().toLowerCase());

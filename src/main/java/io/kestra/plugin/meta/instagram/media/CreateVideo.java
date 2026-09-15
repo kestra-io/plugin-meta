@@ -128,8 +128,10 @@ public class CreateVideo extends AbstractInstagramTask {
     private void waitForContainerReady(RunContext runContext, APIContext context, String containerId) throws Exception {
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
 
-        // one thread for the whole wait, and it dies with the task, so a hung socket cannot pile up across executions
-        ExecutorService poller = Executors.newSingleThreadExecutor(
+        // a stuck poll cannot be interrupted, so the next one needs a fresh thread or it queues behind the dead one
+        // and the container is never re-read. Each hung poll costs POLL_TIMEOUT plus the sleep, so the ceiling below
+        // caps this at around seven threads, all daemon and all discarded with the pool when the wait ends.
+        ExecutorService poller = Executors.newCachedThreadPool(
             r ->
             {
                 var thread = new Thread(r, "instagram-media-poll");

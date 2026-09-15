@@ -21,7 +21,7 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.notNullValue;
 
 @KestraTest
 public class WhatsAppIncomingWebhookTest {
@@ -64,7 +64,7 @@ public class WhatsAppIncomingWebhookTest {
 
         task.run(runContext);
 
-        assertThat(FakeWebhookController.last(), containsString("ge *with some bold text* an"));
+        assertThat(FakeWebhookController.bodyContaining("ge *with some bold text* an"), notNullValue());
     }
 
 }
