@@ -96,8 +96,9 @@ public class MessengerExecutionTest extends AbstractMetaTest {
     /** The SDK cannot express timeouts or custom headers, so options must keep the pre-SDK request. */
     @Test
     void flow_optionsKeepsThePreSdkRequest() throws Exception {
+        // its own upstream flow, so the capture never races the other notification flows
         var execution = runAndCaptureExecution(
-            "main-flow-that-succeeds",
+            "main-flow-for-options",
             "messenger-options"
         );
 

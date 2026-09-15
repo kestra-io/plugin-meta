@@ -28,5 +28,5 @@ triggers:
       id: flow_trigger
       flows:
         - namespace: io.kestra.tests
-          flowId: main-flow-that-succeeds
+          flowId: main-flow-for-options
           states: [ SUCCESS ]
