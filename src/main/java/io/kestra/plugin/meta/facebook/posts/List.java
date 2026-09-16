@@ -6,16 +6,17 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.Page;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.FetchType;
 import io.kestra.core.runners.RunContext;
@@ -26,7 +27,6 @@ import io.kestra.plugin.meta.facebook.AbstractFacebookTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -97,103 +97,83 @@ public class List extends AbstractFacebookTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rPageId = runContext.render(this.pageId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);
 
-        StringBuilder urlBuilder = new StringBuilder();
-        urlBuilder.append(buildApiUrl(runContext, rPageId + "/feed"));
-
-        boolean hasParams = false;
+        var request = new Page(rPageId, apiContext(runContext)).getFeed();
 
         String rFields = runContext.render(this.fields).as(String.class).orElse(null);
         if (rFields != null && !rFields.isEmpty()) {
-            urlBuilder.append("?fields=").append(rFields);
-            hasParams = true;
+            request.requestFields(Arrays.asList(rFields.split(",")));
         }
 
         Integer rLimit = runContext.render(this.limit).as(Integer.class).orElse(MAX_FETCH_LIMIT);
-        urlBuilder.append(hasParams ? "&" : "?").append("limit=").append(rLimit);
+        request.setLimit(rLimit.longValue());
 
-        String fullUrl = urlBuilder.toString();
+        String rawResponse;
+        try {
+            // the raw response keeps every field the caller asked for, the typed model would drop the unknown ones
+            rawResponse = request.execute().getRawResponse();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to list posts: %s".formatted(e.getMessage()), e);
+        }
 
-        HttpRequest request = HttpRequest.builder()
-            .uri(URI.create(fullUrl))
-            .method("GET")
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + rToken)
-            .build();
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        JsonNode dataArray = responseJson.get("data");
 
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
+        Output.OutputBuilder output = Output.builder();
+        long size = 0L;
 
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to list posts: " + response.getStatus().getCode() + " - " + response.getBody()
-                );
+        switch (rFetchType) {
+            case FETCH_ONE -> {
+                Map<String, Object> result = null;
+                if (dataArray != null && dataArray.isArray() && !dataArray.isEmpty()) {
+                    result = JacksonMapper.ofJson().convertValue(dataArray.get(0), Map.class);
+                }
+                size = result == null ? 0L : 1L;
+                output.row(result);
             }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            JsonNode dataArray = responseJson.get("data");
-
-            Output.OutputBuilder output = Output.builder();
-            long size = 0L;
-
-            switch (rFetchType) {
-                case FETCH_ONE -> {
-                    Map<String, Object> result = null;
-                    if (dataArray != null && dataArray.isArray() && !dataArray.isEmpty()) {
-                        result = JacksonMapper.ofJson().convertValue(dataArray.get(0), Map.class);
-                    }
-                    size = result == null ? 0L : 1L;
-                    output.row(result);
-                }
-                case STORE -> {
-                    File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (
-                        OutputStream fileOutputStream = new BufferedOutputStream(
-                            new FileOutputStream(tempFile),
-                            FileSerde.BUFFER_SIZE
-                        )
-                    ) {
-                        if (dataArray != null && dataArray.isArray()) {
-                            for (JsonNode postNode : dataArray) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
-                                FileSerde.write(fileOutputStream, post);
-                                size++;
-                            }
-                        }
-                    }
-                    output.uri(runContext.storage().putFile(tempFile));
-                }
-                case FETCH -> {
-                    java.util.List<Map<String, Object>> posts = new ArrayList<>();
+            case STORE -> {
+                File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
+                try (
+                    OutputStream fileOutputStream = new BufferedOutputStream(
+                        new FileOutputStream(tempFile),
+                        FileSerde.BUFFER_SIZE
+                    )
+                ) {
                     if (dataArray != null && dataArray.isArray()) {
                         for (JsonNode postNode : dataArray) {
                             @SuppressWarnings("unchecked")
                             Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
-                            posts.add(post);
+                            FileSerde.write(fileOutputStream, post);
                             size++;
                         }
                     }
-                    output.rows(posts);
                 }
-                case NONE -> {
-                    if (dataArray != null && dataArray.isArray()) {
-                        size = dataArray.size();
+                output.uri(runContext.storage().putFile(tempFile));
+            }
+            case FETCH -> {
+                java.util.List<Map<String, Object>> posts = new ArrayList<>();
+                if (dataArray != null && dataArray.isArray()) {
+                    for (JsonNode postNode : dataArray) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> post = JacksonMapper.ofJson().convertValue(postNode, Map.class);
+                        posts.add(post);
+                        size++;
                     }
                 }
+                output.rows(posts);
             }
-
-            output.size(size);
-            runContext.logger().info("Successfully retrieved {} Facebook posts", size);
-
-            return output.build();
+            case NONE -> {
+                if (dataArray != null && dataArray.isArray()) {
+                    size = dataArray.size();
+                }
+            }
         }
+
+        output.size(size);
+        runContext.logger().info("Successfully retrieved {} Facebook posts", size);
+
+        return output.build();
     }
 
     @Builder

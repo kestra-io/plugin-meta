@@ -1,0 +1,32 @@
+id: messenger-options
+namespace: io.kestra.tests
+
+inputs:
+  - id: url
+    type: STRING
+    defaults: "http://localhost:59443"
+
+tasks:
+  - id: messenger-options-send
+    type: io.kestra.plugin.meta.messenger.MessengerExecution
+    apiBaseUrl: "{{ inputs.url }}"
+    pageId: "827899830403766"
+    accessToken: "test_access_token"
+    recipientIds:
+      - "24745216345137108"
+    executionId: "{{ trigger.executionId }}"
+    customMessage: "Options keeps the pre-SDK path"
+    options:
+      connectTimeout: PT5S
+      headers:
+        X-Flow-Name: "options-test"
+
+triggers:
+  - id: on_success
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow_trigger
+      flows:
+        - namespace: io.kestra.tests
+          flowId: main-flow-for-options
+          states: [ SUCCESS ]

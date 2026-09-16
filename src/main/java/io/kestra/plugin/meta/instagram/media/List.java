@@ -8,16 +8,15 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.FetchType;
 import io.kestra.core.runners.RunContext;
@@ -32,7 +31,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -102,93 +100,81 @@ public class List extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         Integer rLimit = runContext.render(this.limit).as(Integer.class).orElse(DEFAULT_MEDIA_LIMIT);
         java.util.List<MediaField> rFields = runContext.render(this.fields).asList(MediaField.class);
         FetchType rFetchType = runContext.render(this.fetchType).as(FetchType.class).orElse(FetchType.FETCH);
 
-        String fieldsParam = rFields.stream()
-            .map(field -> field.name().toLowerCase())
-            .collect(Collectors.joining(","));
+        var request = new IGUser(rIgId, apiContext(runContext))
+            .getMedia()
+            .setParam("limit", rLimit);
 
-        String url = buildApiUrl(runContext, rIgId + "/media");
+        // an empty list would otherwise ask Graph for a field named "", which it rejects
+        if (!rFields.isEmpty()) {
+            request.requestFields(rFields.stream().map(field -> field.name().toLowerCase()).toList());
+        }
 
-        HttpRequest request = HttpRequest.builder()
-            .method("GET")
-            .uri(URI.create(url + "?fields=" + fieldsParam + "&limit=" + rLimit))
-            .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer " + rToken)
-            .build();
+        String rawResponse;
+        try {
+            // the raw response keeps every field the caller asked for, the typed model would drop the unknown ones
+            rawResponse = request.execute().getRawResponse();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to list media: %s".formatted(e.getMessage()), e);
+        }
 
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        JsonNode dataNode = responseJson.get("data");
 
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to list media: " + response.getStatus().getCode() + " - "
-                        + response.getBody()
-                );
+        Output.OutputBuilder output = Output.builder();
+        long size = 0L;
+
+        switch (rFetchType) {
+            case FETCH_ONE -> {
+                Map<String, Object> result = null;
+                if (dataNode != null && dataNode.isArray() && !dataNode.isEmpty()) {
+                    result = convertNodeToMap(dataNode.get(0));
+                }
+                size = result == null ? 0L : 1L;
+                output.row(result);
             }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            JsonNode dataNode = responseJson.get("data");
-
-            Output.OutputBuilder output = Output.builder();
-            long size = 0L;
-
-            switch (rFetchType) {
-                case FETCH_ONE -> {
-                    Map<String, Object> result = null;
-                    if (dataNode != null && dataNode.isArray() && !dataNode.isEmpty()) {
-                        result = convertNodeToMap(dataNode.get(0));
-                    }
-                    size = result == null ? 0L : 1L;
-                    output.row(result);
-                }
-                case STORE -> {
-                    File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
-                    try (
-                        OutputStream fileOutputStream = new BufferedOutputStream(
-                            new FileOutputStream(tempFile),
-                            FileSerde.BUFFER_SIZE
-                        )
-                    ) {
-                        if (dataNode != null && dataNode.isArray()) {
-                            for (JsonNode mediaNode : dataNode) {
-                                Map<String, Object> map = convertNodeToMap(mediaNode);
-                                FileSerde.write(fileOutputStream, map);
-                                size++;
-                            }
-                        }
-                    }
-                    output.uri(runContext.storage().putFile(tempFile));
-                }
-                case FETCH -> {
-                    java.util.List<Map<String, Object>> maps = new ArrayList<>();
+            case STORE -> {
+                File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
+                try (
+                    OutputStream fileOutputStream = new BufferedOutputStream(
+                        new FileOutputStream(tempFile),
+                        FileSerde.BUFFER_SIZE
+                    )
+                ) {
                     if (dataNode != null && dataNode.isArray()) {
                         for (JsonNode mediaNode : dataNode) {
-                            maps.add(convertNodeToMap(mediaNode));
+                            Map<String, Object> map = convertNodeToMap(mediaNode);
+                            FileSerde.write(fileOutputStream, map);
                             size++;
                         }
                     }
-                    output.rows(maps);
                 }
-                case NONE -> {
-                    if (dataNode != null && dataNode.isArray()) {
-                        size = dataNode.size();
+                output.uri(runContext.storage().putFile(tempFile));
+            }
+            case FETCH -> {
+                java.util.List<Map<String, Object>> maps = new ArrayList<>();
+                if (dataNode != null && dataNode.isArray()) {
+                    for (JsonNode mediaNode : dataNode) {
+                        maps.add(convertNodeToMap(mediaNode));
+                        size++;
                     }
                 }
+                output.rows(maps);
             }
-
-            output.size(size);
-            runContext.logger().info("Successfully retrieved {} media items", size);
-
-            return output.build();
+            case NONE -> {
+                if (dataNode != null && dataNode.isArray()) {
+                    size = dataNode.size();
+                }
+            }
         }
+
+        output.size(size);
+        runContext.logger().info("Successfully retrieved {} media items", size);
+
+        return output.build();
     }
 
     private Map<String, Object> convertNodeToMap(JsonNode mediaNode) {

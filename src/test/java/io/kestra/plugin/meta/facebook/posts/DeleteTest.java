@@ -57,4 +57,22 @@ class DeleteTest extends AbstractFacebookTest {
         assertThat(output.getTotalDeleted(), is(1));
         assertThat(output.getAllSuccess(), is(true));
     }
+
+    @Test
+    void countsASuccessFalseResponseAsFailed() throws Exception {
+        // Graph answers 200 with success:false rather than an error status, so the body decides the bucket
+        Delete task = Delete.builder()
+            .apiBaseUrl(Property.ofValue(embeddedServer.getURL().toString()))
+            .pageId(Property.ofValue("mock-page-id"))
+            .accessToken(Property.ofValue("mock-access-token"))
+            .postIds(Property.ofValue(java.util.List.of("123_refused")))
+            .build();
+
+        Delete.Output output = task.run(runContextFactory.of());
+
+        assertThat(output.getFailedPostIds(), contains("123_refused"));
+        assertThat(output.getDeletedPostIds(), empty());
+        assertThat(output.getTotalFailed(), is(1));
+        assertThat(output.getAllSuccess(), is(false));
+    }
 }

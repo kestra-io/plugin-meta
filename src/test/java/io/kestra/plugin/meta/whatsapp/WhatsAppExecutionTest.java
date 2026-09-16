@@ -41,7 +41,7 @@ public class WhatsAppExecutionTest extends AbstractMetaTest {
             "whatsapp"
         );
 
-        String receivedData = waitForWebhookData(() -> FakeWebhookController.data, 5000);
+        String receivedData = waitForWebhookData(() -> FakeWebhookController.bodyContaining(failedExecution.getId()), 5000);
 
         assertThat(receivedData, containsString(failedExecution.getId()));
         assertThat(receivedData, containsString("https://mysuperhost.com/kestra/ui"));

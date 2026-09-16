@@ -1,22 +1,24 @@
 package io.kestra.plugin.meta.instagram.media;
 
-import java.net.URI;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.facebook.ads.sdk.APIContext;
+import com.facebook.ads.sdk.APIException;
+import com.facebook.ads.sdk.IGMedia;
+import com.facebook.ads.sdk.IGUser;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.client.configurations.TimeoutConfiguration;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -30,7 +32,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -61,6 +62,8 @@ import io.kestra.core.models.annotations.PluginProperty;
     }
 )
 public class CreateVideo extends AbstractInstagramTask {
+    /** Matches the read timeout the pre-SDK poll set on its HTTP client. */
+    private static final Duration POLL_TIMEOUT = Duration.ofSeconds(30);
 
     @Schema(title = "Video URL", description = "Public HTTPS URL of the video to upload (e.g. MP4).")
     @NotNull
@@ -79,21 +82,22 @@ public class CreateVideo extends AbstractInstagramTask {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String rIgId = runContext.render(this.igId).as(String.class).orElseThrow();
-        String rToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
         String rVideoUrl = runContext.render(this.videoUrl).as(String.class).orElseThrow();
         VideoType rVideoType = runContext.render(this.videoType).as(VideoType.class).orElse(VideoType.VIDEO);
         String rCaptionText = runContext.render(this.caption).as(String.class).orElse(null);
 
         runContext.logger().info("Creating Instagram {} post with video from: {}", rVideoType, rVideoUrl);
 
-        String containerId = createMediaContainer(runContext, rIgId, rToken, rVideoUrl, rVideoType, rCaptionText);
+        var context = apiContext(runContext);
+
+        String containerId = createMediaContainer(context, rIgId, rVideoUrl, rVideoType, rCaptionText);
         runContext.logger().info("Media container created with ID: {}", containerId);
 
         // Wait for video processing to complete
-        waitForContainerReady(runContext, rToken, containerId);
+        waitForContainerReady(runContext, context, containerId);
         runContext.logger().info("Video processing completed for container: {}", containerId);
 
-        String mediaId = publishMedia(runContext, rIgId, rToken, containerId);
+        String mediaId = publishMedia(context, rIgId, containerId);
 
         runContext.logger().info("Successfully created Instagram video post with ID: {}", mediaId);
 
@@ -103,65 +107,52 @@ public class CreateVideo extends AbstractInstagramTask {
             .build();
     }
 
-    private String createMediaContainer(RunContext runContext, String igId, String token, String videoUrl,
-        VideoType VideoType, String caption) throws Exception {
-        String url = buildApiUrl(runContext, igId + "/media");
-
-        Map<String, Object> containerData = new HashMap<>();
-        containerData.put("video_url", videoUrl);
-        containerData.put("media_type", VideoType.name());
+    private String createMediaContainer(APIContext context, String igId, String videoUrl,
+        VideoType VideoType, String caption) {
+        var request = new IGUser(igId, context)
+            .createMedia()
+            .setVideoUrl(videoUrl)
+            .setMediaType(VideoType.name());
 
         if (caption != null) {
-            containerData.put("caption", caption);
+            request.setCaption(caption);
         }
 
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(containerData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .contentType("application/json")
-                    .build()
-            )
-            .addHeader("Authorization", "Bearer " + token)
-            .addHeader("Content-Type", "application/json")
-            .build();
-
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException("Failed to create container : " + response.getStatus().getCode());
-            }
-
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+        try {
+            return request.execute().getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to create container : %s".formatted(e.getMessage()), e);
         }
     }
 
-    private void waitForContainerReady(RunContext runContext, String token, String containerId)
-        throws Exception {
-        String url = buildApiUrl(runContext, containerId);
-
+    private void waitForContainerReady(RunContext runContext, APIContext context, String containerId) throws Exception {
         runContext.logger().info("Waiting for video processing to complete for container: {}", containerId);
+
+        // a stuck poll cannot be interrupted, so the next one needs a fresh thread or it queues behind the dead one
+        // and the container is never re-read. Each hung poll costs POLL_TIMEOUT plus the sleep, so the ceiling below
+        // caps this at around seven threads, all daemon and all discarded with the pool when the wait ends.
+        ExecutorService poller = Executors.newCachedThreadPool(
+            r ->
+            {
+                var thread = new Thread(r, "instagram-media-poll");
+                thread.setDaemon(true);
+
+                return thread;
+            }
+        );
 
         try {
             Await.until(
                 () ->
                 {
                     try {
-                        return checkContainerStatus(runContext, url, token, containerId);
+                        return checkContainerStatus(runContext, poller, context, containerId);
+                    } catch (VideoProcessingFailedException e) {
+                        // Graph has given its verdict, polling on would only turn it into a misleading timeout
+                        throw e;
                     } catch (Exception e) {
+                        runContext.logger().debug("Container {} status poll failed, retrying: {}", containerId, e.getMessage());
+
                         return false;
                     }
                 },
@@ -170,97 +161,81 @@ public class CreateVideo extends AbstractInstagramTask {
             );
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out after 5 minutes while waiting for video processing to complete for container: " + containerId, e);
+        } finally {
+            poller.shutdownNow();
         }
     }
 
-    private Callable<Boolean> checkContainerStatus(RunContext runContext, String url, String token,
-        String containerId) {
-        return () ->
-        {
-            HttpRequest request = HttpRequest.builder()
-                .method("GET")
-                .uri(URI.create(url + "?fields=status_code"))
-                .addHeader("Authorization", "Bearer " + token)
-                .build();
-
-            HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-                .timeout(
-                    TimeoutConfiguration.builder()
-                        .readIdleTimeout(Property.ofValue(Duration.ofSeconds(30)))
-                        .build()
-                )
-                .build();
-
-            try (
-                HttpClient httpClient = HttpClient.builder()
-                    .configuration(httpConfiguration)
-                    .runContext(runContext)
-                    .build()
-            ) {
-                HttpResponse<String> response = httpClient.request(request, String.class);
-
-                if (response.getStatus().getCode() == 200) {
-                    JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-                    String statusCode = responseJson.has("status_code")
-                        ? responseJson.get("status_code").asText()
-                        : null;
-
-                    runContext.logger().debug("Container {} status: {}", containerId, statusCode);
-
-                    if ("FINISHED".equals(statusCode)) {
-                        runContext.logger().info("Video processing completed for container: {}", containerId);
-                        return true; // Processing complete
-                    } else if ("ERROR".equals(statusCode)) {
-                        throw new RuntimeException("Video processing failed for container: " + containerId);
-                    }
-                    // Status is IN_PROGRESS, continue waiting
-                    runContext.logger().debug("Video still processing, status: {}", statusCode);
-                }
-                return false; // Not ready yet
-            }
-        };
+    /** Terminal, unlike a failed poll, so it has to escape the retry loop instead of reading as "not ready yet". */
+    private static class VideoProcessingFailedException extends RuntimeException {
+        VideoProcessingFailedException(String message) {
+            super(message);
+        }
     }
 
-    private String publishMedia(RunContext runContext, String igId, String token, String containerId) throws Exception {
-
-        String url = buildApiUrl(runContext, igId + "/media_publish");
-
-        Map<String, Object> publishData = new HashMap<>();
-        publishData.put("creation_id", containerId);
-
-        String jsonBody = JacksonMapper.ofJson().writeValueAsString(publishData);
-
-        HttpRequest request = HttpRequest.builder()
-            .method("POST")
-            .uri(URI.create(url))
-            .body(
-                HttpRequest.StringRequestBody.builder()
-                    .content(jsonBody)
-                    .contentType("application/json")
-                    .build()
-            )
-            .addHeader("Authorization", "Bearer " + token)
-            .addHeader("Content-Type", "application/json")
-            .build();
-
-        HttpConfiguration httpConfiguration = HttpConfiguration.builder().build();
-
-        try (
-            HttpClient httpClient = HttpClient.builder()
-                .configuration(httpConfiguration)
-                .runContext(runContext)
-                .build()
-        ) {
-            HttpResponse<String> response = httpClient.request(request, String.class);
-
-            if (response.getStatus().getCode() != 200) {
-                throw new RuntimeException(
-                    "Failed to publish media: " + response.getStatus().getCode() + " - " + response.getBody()
+    private boolean checkContainerStatus(RunContext runContext, ExecutorService poller, APIContext context, String containerId) throws Exception {
+        // the SDK exposes no timeout seam and HttpsURLConnection defaults to infinite, and Await only checks its
+        // deadline between polls, so a hung call has to be bounded here or the 5 minute ceiling never fires
+        String rawResponse;
+        try {
+            var future = CompletableFuture
+                .supplyAsync(
+                    () ->
+                    {
+                        try {
+                            return new IGMedia(containerId, context)
+                                .get()
+                                .requestField("status_code")
+                                .execute()
+                                .getRawResponse();
+                        } catch (APIException e) {
+                            throw new CompletionException(e);
+                        }
+                    },
+                    poller
                 );
-            }
 
-            JsonNode responseJson = JacksonMapper.ofJson().readTree(response.getBody());
-            return responseJson.get("id").asText();
+            try {
+                rawResponse = future.get(POLL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                // get() only stops waiting, the call itself keeps running until the socket gives up
+                future.cancel(true);
+                runContext.logger().debug("Container {} status poll timed out after {}", containerId, POLL_TIMEOUT);
+
+                return false;
+            }
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Failed to read the status of container %s".formatted(containerId), e.getCause());
+        }
+
+        JsonNode responseJson = JacksonMapper.ofJson().readTree(rawResponse);
+        String statusCode = responseJson.has("status_code")
+            ? responseJson.get("status_code").asText()
+            : null;
+
+        runContext.logger().debug("Container {} status: {}", containerId, statusCode);
+
+        if ("FINISHED".equals(statusCode)) {
+            runContext.logger().info("Video processing completed for container: {}", containerId);
+            return true; // Processing complete
+        } else if ("ERROR".equals(statusCode)) {
+            throw new VideoProcessingFailedException("Video processing failed for container: " + containerId);
+        }
+        // Status is IN_PROGRESS, continue waiting
+        runContext.logger().debug("Video still processing, status: {}", statusCode);
+
+        return false; // Not ready yet
+    }
+
+    private String publishMedia(APIContext context, String igId, String containerId) {
+        try {
+            return new IGUser(igId, context)
+                .createMediaPublish()
+                .setCreationId(containerId)
+                .execute()
+                .getId();
+        } catch (APIException e) {
+            throw new RuntimeException("Failed to publish media: %s".formatted(e.getMessage()), e);
         }
     }
 
