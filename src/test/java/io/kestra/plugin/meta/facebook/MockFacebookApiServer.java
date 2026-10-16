@@ -2,12 +2,15 @@ package io.kestra.plugin.meta.facebook;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
@@ -52,10 +55,18 @@ public class MockFacebookApiServer {
         );
     }
 
+    // query parameters of the last insights call, so tests can check what was sent
+    public static volatile Map<String, String> lastInsightsQuery = Map.of();
+
     @Get("/{postId}/insights")
     public HttpResponse<String> getPostInsights(@PathVariable String postId,
-        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization)
+        @Header(HttpHeaders.AUTHORIZATION) @Nullable String authorization,
+        HttpRequest<?> request)
         throws IOException {
+        Map<String, String> query = new HashMap<>();
+        request.getParameters().forEach((name, values) -> query.put(name, values.getFirst()));
+        lastInsightsQuery = query;
+
         return HttpResponse.ok(
             IOUtils.toString(
                 Objects.requireNonNull(

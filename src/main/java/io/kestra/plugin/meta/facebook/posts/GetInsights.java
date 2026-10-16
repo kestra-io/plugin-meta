@@ -1,6 +1,5 @@
 package io.kestra.plugin.meta.facebook.posts;
 
-import java.time.LocalDate;
 import java.util.*;
 
 import com.facebook.ads.sdk.APIContext;
@@ -76,7 +75,7 @@ import lombok.experimental.SuperBuilder;
                       - POST_REACTIONS_ANGER_TOTAL
                       - POST_IMPRESSIONS
                       - POST_ENGAGED_USERS
-                    period: "lifetime"
+                    period: LIFETIME
                 """
         ),
         @Example(
@@ -93,8 +92,8 @@ import lombok.experimental.SuperBuilder;
                     accessToken: "{{ secret('FACEBOOK_ACCESS_TOKEN') }}"
                     postIds:
                       - "123456789_987654321"
-                    datePreset: "last_7d"
-                    period: "day"
+                    datePreset: LAST_7D
+                    period: DAY
                 """
         ),
         @Example(
@@ -113,7 +112,7 @@ import lombok.experimental.SuperBuilder;
                       - "123456789_987654321"
                     since: "2025-10-01"
                     until: "2025-10-15"
-                    period: "day"
+                    period: DAY
                 """
         )
     }
@@ -147,15 +146,13 @@ public class GetInsights extends AbstractFacebookTask {
     @PluginProperty(group = "advanced")
     private Property<Period> period = Property.ofValue(Period.LIFETIME);
 
-    @Schema(title = "Since", description = "Lower bound (datetime string). Overrides date_preset when set. Defaults to today.")
-    @Builder.Default
+    @Schema(title = "Since", description = "Lower bound (datetime string). When since or until is set, it is sent instead of datePreset.")
     @PluginProperty(group = "advanced")
-    private Property<String> since = Property.ofValue(LocalDate.now().toString());
+    private Property<String> since;
 
-    @Schema(title = "Until", description = "Upper bound (datetime string). Overrides date_preset when set. Defaults to today.")
-    @Builder.Default
+    @Schema(title = "Until", description = "Upper bound (datetime string). When since or until is set, it is sent instead of datePreset.")
     @PluginProperty(group = "advanced")
-    private Property<String> until = Property.ofValue(LocalDate.now().toString());
+    private Property<String> until;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
