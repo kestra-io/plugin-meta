@@ -56,7 +56,7 @@ import lombok.experimental.SuperBuilder;
                     accessToken: "{{ secret('INSTAGRAM_ACCESS_TOKEN') }}"
                     videoUrl: "https://example.com/video.mp4"
                     caption: "Check out this amazing video!"
-                    VideoType: REELS
+                    videoType: REELS
                 """
         )
     }
