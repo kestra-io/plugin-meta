@@ -16,6 +16,9 @@ tasks:
     from: "some phone number"
     profileName: "MyProfile"
     executionId: "{{trigger.executionId}}"
+    customMessage: "Error custom message"
+    customFields:
+      env: "prod"
 
 triggers:
   - id: on_failure

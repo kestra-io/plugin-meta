@@ -48,6 +48,8 @@ public class WhatsAppExecutionTest extends AbstractMetaTest {
         assertThat(receivedData, containsString("\"wa_id\":\"someId\""));
         assertThat(receivedData, containsString("Failed on task `failed`"));
         assertThat(receivedData, containsString("Final task ID failed"));
+        assertThat(receivedData, containsString("Error custom message"));
+        assertThat(receivedData, containsString("env: prod"));
     }
 
 }
