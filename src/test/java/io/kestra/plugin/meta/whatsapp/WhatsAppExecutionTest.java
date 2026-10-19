@@ -50,4 +50,21 @@ public class WhatsAppExecutionTest extends AbstractMetaTest {
         assertThat(receivedData, containsString("Final task ID failed"));
     }
 
+    @Test
+    void customMessageAndFields() throws Exception {
+        runAndCaptureExecution(
+            "main-flow-that-fails",
+            "whatsapp-custom-fields"
+        );
+
+        String receivedData = waitForWebhookData(
+            () -> FakeWebhookController.bodyContaining("Custom WhatsApp regression message"),
+            5000
+        );
+
+        assertThat(receivedData, containsString("Custom WhatsApp regression message"));
+        assertThat(receivedData, containsString("Environment: test"));
+        assertThat(receivedData, containsString("Component: plugin-meta"));
+    }
+
 }
