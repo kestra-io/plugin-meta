@@ -75,9 +75,15 @@ public abstract class AbstractMetaConnection extends Task implements RunnableTas
         @PluginProperty(group = "execution")
         private final Property<Duration> connectTimeout;
 
-        @Schema(title = "The maximum time allowed for reading data from the server before failing.")
+        @Deprecated
+        @Schema(
+            title = "The maximum time allowed for reading data from the server before failing.",
+            description = """
+                Deprecated, this option has no effect: Kestra's HTTP client has no separate read timeout. Use `readIdleTimeout` instead.
+                """
+        )
         @Builder.Default
-        @PluginProperty(group = "execution")
+        @PluginProperty(group = "deprecated")
         private final Property<Duration> readTimeout = Property.ofValue(Duration.ofSeconds(10));
 
         @Schema(title = "The time allowed for a read connection to remain idle before closing it.")
@@ -85,14 +91,26 @@ public abstract class AbstractMetaConnection extends Task implements RunnableTas
         @PluginProperty(group = "execution")
         private final Property<Duration> readIdleTimeout = Property.ofValue(Duration.of(5, ChronoUnit.MINUTES));
 
-        @Schema(title = "The time an idle connection can remain in the client's connection pool before being closed.")
+        @Deprecated
+        @Schema(
+            title = "The time an idle connection can remain in the client's connection pool before being closed.",
+            description = """
+                Deprecated, this option has no effect: Kestra's HTTP client does not support a connection pool idle timeout.
+                """
+        )
         @Builder.Default
-        @PluginProperty(group = "execution")
+        @PluginProperty(group = "deprecated")
         private final Property<Duration> connectionPoolIdleTimeout = Property.ofValue(Duration.ofSeconds(0));
 
-        @Schema(title = "The maximum content length of the response.")
+        @Deprecated
+        @Schema(
+            title = "The maximum content length of the response.",
+            description = """
+                Deprecated, this option has no effect: Kestra's HTTP client does not limit the response size.
+                """
+        )
         @Builder.Default
-        @PluginProperty(group = "execution")
+        @PluginProperty(group = "deprecated")
         private final Property<Integer> maxContentLength = Property.ofValue(1024 * 1024 * 10);
 
         @Schema(title = "The default charset for the request.")
